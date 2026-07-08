@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dua Stars - ดุอาอ์ดวงดาราน้อยสำหรับคุณแม่และหนูน้อย</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt (ไทย) & Amiri (อาหรับคมชัดสูง) & Short Stack (สำหรับฟอนต์แนวเด็กน่ารัก) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Prompt:wght@300;400;500;600;700;800&family=Short+Stack&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f8fafc;
+        }
+        .kids-font {
+            font-family: 'Short Stack', 'Prompt', sans-serif;
+        }
+        .arabic-font {
+            font-family: 'Amiri', serif;
+            direction: rtl;
+        }
+        /* Hide scrollbar for carousel but keep functional */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        
+        /* Smooth Floating Animation for stars and cloud */
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(3deg); }
+        }
+        .float-animation {
+            animation: float-slow 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        .pulse-animation {
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+
+        /* Voice Wave Visualizer Bars */
+        @keyframes wave-grow {
+            0%, 100% { transform: scaleY(0.3); }
+            50% { transform: scaleY(1.1); }
+        }
+        .wave-bar {
+            animation: wave-grow 0.6s ease-in-out infinite alternate;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-[#EEF2FF] via-[#F4F3FF] to-[#FFF1F2] min-h-screen flex flex-col selection:bg-indigo-200">
+
+    <header class="w-full bg-white/70 backdrop-blur-md sticky top-0 z-40 border-b border-indigo-50/80 shadow-xs transition-all">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            
+            <!-- App Brand Logo with Sparkle -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="changeCategory('all')">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-md shadow-indigo-100 transform hover:scale-105 transition-all">
+                    <svg class="w-7 h-7 text-yellow-300" style="animation: spin 8s linear infinite;" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-extrabold bg-gradient-to-r from-indigo-900 to-purple-800 bg-clip-text text-transparent flex items-center gap-1.5">
+                        Dua Stars <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">เด็กดีตามซุนนะฮ์</span>
+                    </h1>
+                    <p class="text-[10px] md:text-xs text-slate-500">เรียนรู้ดุอาอ์มีหลักฐาน พร้อมสะสมคะแนนดาวความดี</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Mascot & Score Badge -->
+            <div class="flex items-center gap-3">
+                
+                <!-- Cloud Sync Button -->
+                <button onclick="openSyncModal()" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs text-indigo-950 font-bold text-xs">
+                    <span>☁️</span> <span class="hidden md:inline">คลาวด์ซิงก์</span>
+                </button>
+                
+                <!-- Avatar Select Trigger -->
+                <div onclick="openAvatarSelector()" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs">
+                    <span id="header-avatar" class="text-xl">⭐️</span>
+                    <div class="text-left hidden sm:block">
+                        <span class="text-[9px] text-slate-400 block leading-tight">คู่หูของหนู</span>
+                        <span id="header-avatar-name" class="text-xs font-bold text-indigo-950">ดาราน้อย</span>
+                    </div>
+                </div>
+
+                <!-- Star Score Badge -->
+                <div onclick="showRewardInfo()" class="bg-gradient-to-r from-yellow-400 to-amber-400 text-amber-950 px-3.5 py-2 rounded-2xl flex items-center gap-2.5 shadow-md shadow-amber-200 border-b-4 border-amber-500 active:scale-95 transition-all cursor-pointer">
+                    <i class="fa-solid fa-star text-white text-lg animate-bounce"></i>
+                    <div class="text-right">
+                        <span class="text-[9px] block font-extrabold uppercase tracking-wide leading-tight text-amber-900/80">สะสมแล้ว</span>
+                        <span id="star-count" class="text-base md:text-lg font-black kids-font leading-none">0</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Custom Mascot Change Panel (Sliding out) -->
+    <div id="avatar-selector" class="bg-indigo-950/95 backdrop-blur-xs text-white overflow-hidden max-h-0 transition-all duration-300 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+                <h4 class="text-sm font-bold text-yellow-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-face-smile"></i> เลือกมาสคอตคู่ใจของหนูน้อยคนเก่งกันเถอะ!
+                </h4>
+                <p class="text-xs text-indigo-200">เลือกฮีโร่ดวงดาราที่จะร่วมสะสมความดีไปกับหนูในทุกดุอาอ์</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <button onclick="setAvatar('⭐️', 'ดาราน้อย')" class="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-2 rounded-xl text-xs flex items-center gap-2 transition-all">
+                    <span>⭐️</span> ดาราน้อย
+                </button>
+                <button onclick="setAvatar('🌙', 'เสี้ยวจันทร์')" class="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-2 rounded-xl text-xs flex items-center gap-2 transition-all">
+                    <span>🌙</span> เสี้ยวจันทร์
+                </button>
+                <button onclick="setAvatar('☀️', 'ตะวันยิ้ม')" class="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-2 rounded-xl text-xs flex items-center gap-2 transition-all">
+                    <span>☀️</span> ตะวันยิ้ม
+                </button>
+                <button onclick="setAvatar('☁️', 'เมฆปุย')" class="bg-white/10 hover:bg-white/20 active:scale-95 border border-white/20 px-3 py-2 rounded-xl text-xs flex items-center gap-2 transition-all">
+                    <span>☁️</span> เมฆปุย
+                </button>
+                <button onclick="closeAvatarSelector()" class="text-xs text-rose-400 font-bold px-3 py-2">
+                    <i class="fa-solid fa-xmark mr-1"></i>ปิด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-6 flex flex-col gap-6">
+        
+        <!-- Welcome Hero Panel with interactive daily target -->
+        <section class="bg-gradient-to-r from-indigo-900 via-purple-950 to-indigo-950 rounded-[36px] p-6 md:p-8 text-white relative overflow-hidden shadow-xl shadow-indigo-950/20">
+            <!-- Decorative SVG circles and stars backgrounds -->
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div class="absolute -right-16 -top-16 w-48 h-48 bg-purple-500 rounded-full blur-3xl opacity-30"></div>
+            <div class="absolute -left-16 -bottom-16 w-48 h-48 bg-pink-500 rounded-full blur-3xl opacity-20"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="text-center md:text-left flex-1">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 mb-3.5 tracking-wider uppercase">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> 
+                        รวมดุอาอ์หะดีษศอฮีห์ 100% (Authentic Sunnah)
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">
+                        อัสสลามุอะลัยกุม หนูน้อย <span id="welcome-mascot-name" class="text-yellow-300">ดาราน้อย</span> คนเก่ง!
+                    </h2>
+                    <p class="text-xs md:text-sm text-indigo-200 mt-2 leading-relaxed max-w-xl">
+                        มาสะสมความดีด้วยดุอาอ์จากท่านนบีกันนะคะคุณแม่ วันนี้เริ่มฝึกดุอาอ์บทใหม่ เพื่อรับของรางวัลและเพิ่มเกราะคุ้มครองลูกรักไปพร้อม ๆ กัน
+                    </p>
+
+                    <!-- Star Goal Status -->
+                    <div class="mt-5 flex flex-wrap items-center gap-3 justify-center md:justify-start">
+                        <div class="bg-white/10 rounded-2xl px-4 py-2.5 border border-white/15 text-left min-w-[130px]">
+                            <span class="text-[9px] text-indigo-300 block leading-tight font-bold">ฝึกสำเร็จแล้ว</span>
+                            <span id="dashboard-progress-text" class="text-sm font-extrabold text-white">0 / 20 บท</span>
+                        </div>
+                        <div class="bg-white/10 rounded-2xl px-4 py-2.5 border border-white/15 text-left min-w-[130px]">
+                            <span class="text-[9px] text-indigo-300 block leading-tight font-bold">ความก้าวหน้าการเรียน</span>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <div class="w-16 bg-white/20 h-2 rounded-full overflow-hidden">
+                                    <div id="progress-bar-fill" class="bg-gradient-to-r from-amber-400 to-yellow-300 h-full w-0 transition-all duration-500"></div>
+                                </div>
+                                <span id="progress-percent-text" class="text-xs font-bold">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Big Interactive Mascot Display on Right -->
+                <div class="w-32 h-32 shrink-0 bg-white/10 backdrop-blur-sm border-2 border-white/20 rounded-full flex items-center justify-center relative float-animation shadow-lg shadow-black/20">
+                    <span id="hero-mascot-emoji" class="text-6xl select-none">⭐️</span>
+                    <span class="absolute -bottom-1 -right-1 bg-yellow-400 text-slate-900 rounded-full w-8 h-8 flex items-center justify-center text-xs shadow-md border-2 border-white font-extrabold"><i class="fa-solid fa-crown text-amber-800"></i></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Enhanced Category Selection Tabs with Cute Graphics -->
+        <section class="flex flex-col gap-3">
+            <div class="flex items-center justify-between px-1">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">เลือกหมวดหมู่กิจกรรมดุอาอ์</span>
+                <button onclick="showResetConfirmModal()" class="text-xs text-rose-500 hover:text-rose-600 bg-rose-50 hover:bg-rose-100/60 font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-trash-can"></i> ล้างประวัติเพื่อท่องใหม่
+                </button>
+            </div>
+
+            <!-- Scrollable Category Pill Buttons -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                <button onclick="changeCategory('all')" id="tab-all" class="category-pill active-tab whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-indigo-600 text-white border-2 border-indigo-600">
+                    <span class="text-base">✨</span>
+                    <span>ทั้งหมด (<span id="badge-all">20</span>)</span>
+                </button>
+
+                <button onclick="changeCategory('routine')" id="tab-routine" class="category-pill whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-white text-slate-600 hover:text-slate-900 border-2 border-indigo-50 hover:border-indigo-100">
+                    <span class="text-base">🌅</span>
+                    <span>ยามเช้าและกลางคืน (<span id="badge-routine">6</span>)</span>
+                </button>
+
+                <button onclick="changeCategory('food')" id="tab-food" class="category-pill whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-white text-slate-600 hover:text-slate-900 border-2 border-indigo-50 hover:border-indigo-100">
+                    <span class="text-base">🍽️</span>
+                    <span>กินดื่มและร่างกาย (<span id="badge-food">4</span>)</span>
+                </button>
+
+                <button onclick="changeCategory('family')" id="tab-family" class="category-pill whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-white text-slate-600 hover:text-slate-900 border-2 border-indigo-50 hover:border-indigo-100">
+                    <span class="text-base">💖</span>
+                    <span>ครอบครัวและมารยาท (<span id="badge-family">4</span>)</span>
+                </button>
+
+                <button onclick="changeCategory('knowledge')" id="tab-knowledge" class="category-pill whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-white text-slate-600 hover:text-slate-900 border-2 border-indigo-50 hover:border-indigo-100">
+                    <span class="text-base">📚</span>
+                    <span>ความรู้และการคุ้มครอง (<span id="badge-knowledge">6</span>)</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Search Bar with Cute Floating Icon -->
+        <section class="bg-white p-4 rounded-3xl shadow-xs border border-indigo-50/50 flex flex-col md:flex-row items-center gap-4">
+            <div class="relative w-full">
+                <input type="text" id="search-input" oninput="filterDuas()" placeholder="พิมพ์เรื่องดุอาอ์ที่อยากสอน เช่น ทานข้าว, นอน, พ่อแม่..." class="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-indigo-50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all bg-slate-50/50 font-medium">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 text-sm"></i>
+            </div>
+            
+            <!-- Quick Help Box -->
+            <div class="hidden md:flex items-center gap-2 shrink-0 text-xs text-amber-800 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100/60 font-semibold">
+                <i class="fa-solid fa-lightbulb text-amber-500 text-sm"></i>
+                <span>มีเสียงภาษาอาหรับและคำแปลจากคลาวด์ แนะนำเปิดเสียงเครื่องด้วยนะคะ</span>
+            </div>
+        </section>
+
+        <!-- Interactive Dua Card Grid -->
+        <section>
+            <div id="duas-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Duas will dynamically generate here via JavaScript -->
+            </div>
+
+            <!-- Empty State for Search -->
+            <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl shadow-xs border border-indigo-50/50">
+                <span class="text-5xl">🔍</span>
+                <h3 class="text-lg font-bold text-slate-700 mt-4">ไม่พบดุอาอ์ที่ค้นหา</h3>
+                <p class="text-xs text-slate-500 mt-1">ลองเปลี่ยนคำค้นหา หรือสลับหมวดหมู่อื่นดูนะคะคุณแม่</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Dua Detail Interactive Modal -->
+    <div id="dua-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all duration-300">
+        <div class="bg-white rounded-[32px] w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl border border-indigo-50/30 transform scale-95 transition-all duration-300" id="modal-content">
+            
+            <!-- Modal Header (Cute Gradient Background) -->
+            <div class="relative p-6 pb-4 border-b border-indigo-50/60 flex items-center justify-between bg-gradient-to-r from-indigo-50/50 via-purple-50/30 to-pink-50/50 rounded-t-[32px]">
+                <div class="flex items-center gap-3">
+                    <span id="modal-category-badge" class="px-3 py-1.5 text-[11px] font-extrabold rounded-full bg-indigo-100/80 text-indigo-700 uppercase tracking-wider"></span>
+                    <span id="modal-memorized-badge" class="hidden px-3 py-1 text-[11px] font-extrabold rounded-full bg-amber-100 border border-amber-200 text-amber-800 items-center gap-1">
+                        <i class="fa-solid fa-star text-amber-500 animate-pulse"></i> จำได้แล้ว!
+                    </span>
+                </div>
+                <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center shadow-xs transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-6 md:p-8 flex flex-col gap-5">
+                
+                <!-- Title & Description Block -->
+                <div class="text-center">
+                    <h3 id="modal-title" class="text-xl md:text-2xl font-extrabold text-indigo-950 mb-1.5">ดุอาอ์</h3>
+                    <p id="modal-subtitle" class="text-xs text-slate-500 max-w-md mx-auto leading-relaxed"></p>
+                </div>
+
+                <!-- Interactive Arabic & Speech Visualization Section -->
+                <div class="p-6 md:p-8 bg-gradient-to-tr from-slate-50 to-indigo-50/30 rounded-3xl border border-indigo-100 relative group overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 text-indigo-100/30 text-7xl select-none"><i class="fa-solid fa-cloud-moon"></i></div>
+                    <div class="absolute -left-6 -top-6 text-indigo-100/30 text-7xl select-none"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+
+                    <!-- Main Arabic Text Display -->
+                    <div id="modal-arabic" class="arabic-font text-3xl md:text-4xl text-slate-900 font-extrabold leading-loose text-center py-4 select-all break-normal tracking-wide">
+                        اللَّهُمَّ
+                    </div>
+
+                    <!-- Beautiful Voice Wave Visualization -->
+                    <div id="voice-wave-container" class="hidden flex items-center justify-center gap-1.5 my-4 h-12">
+                        <span class="wave-bar w-1.5 h-6 bg-indigo-500 rounded-full" style="animation-delay: 0.1s;"></span>
+                        <span class="wave-bar w-1.5 h-10 bg-indigo-600 rounded-full" style="animation-delay: 0.3s;"></span>
+                        <span class="wave-bar w-1.5 h-12 bg-pink-500 rounded-full" style="animation-delay: 0.5s;"></span>
+                        <span class="wave-bar w-1.5 h-9 bg-purple-500 rounded-full" style="animation-delay: 0.2s;"></span>
+                        <span class="wave-bar w-1.5 h-6 bg-pink-400 rounded-full" style="animation-delay: 0.4s;"></span>
+                        <span class="text-xs font-bold text-indigo-700 ml-3 animate-pulse">กำลังออกเสียง...</span>
+                    </div>
+
+                    <!-- Cloud Synthesizer Play Controls -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mt-4 relative z-10">
+                        <button id="btn-speak-arabic" onclick="playArabicSpeechFromModal()" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-extrabold text-sm flex items-center justify-center gap-2.5 shadow-md shadow-indigo-200 transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+                            <i class="fa-solid fa-volume-high text-lg text-yellow-300"></i> ฟังเสียงสำเนียงอาหรับ
+                        </button>
+                        <button id="btn-speak-thai" onclick="playThaiSpeechFromModal()" class="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 border-2 border-slate-200/80 font-extrabold text-sm flex items-center justify-center gap-2.5 shadow-xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-75 disabled:pointer-events-none">
+                            <span id="thai-btn-icon"><i class="fa-solid fa-baby text-pink-500 text-base"></i></span>
+                            <span id="thai-btn-text">ฟังเสียงเด็กน้อยแปลความหมาย</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabbed details inside Modal to prevent screen overload -->
+                <div class="border-b border-indigo-50 flex items-center gap-4">
+                    <button onclick="switchModalTab('reading')" id="modal-tab-reading" class="modal-tab active-modal-tab pb-2 text-xs font-bold text-indigo-600 border-b-2 border-indigo-600 px-1">คำแปลและการเรียนรู้</button>
+                    <button onclick="switchModalTab('hadith')" id="modal-tab-hadith" class="modal-tab pb-2 text-xs font-bold text-slate-400 hover:text-slate-600 px-1">หลักฐานหะดีษศอฮีห์</button>
+                </div>
+
+                <!-- Tab content 1: Reading translation -->
+                <div id="modal-content-reading" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Phonetic pronunciation -->
+                        <div class="bg-yellow-50/50 border border-yellow-100 p-4 rounded-2xl">
+                            <h4 class="text-[10px] font-extrabold text-yellow-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-spell-check text-xs"></i> คำอ่านภาษาไทยสะกด
+                            </h4>
+                            <p id="modal-trans" class="text-slate-800 text-sm font-bold leading-relaxed"></p>
+                        </div>
+
+                        <!-- Meaning and values -->
+                        <div class="bg-emerald-50/50 border border-emerald-100 p-4 rounded-2xl">
+                            <h4 class="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-heart text-xs"></i> ความหมายดุอาอ์
+                            </h4>
+                            <p id="modal-translation" class="text-slate-700 text-xs leading-relaxed font-semibold"></p>
+                        </div>
+                    </div>
+
+                    <!-- Repetition Tracker: Sunnah Practice (Read 3 times) -->
+                    <div class="bg-indigo-50/30 border border-indigo-100/60 p-4 rounded-2xl text-center">
+                        <span class="text-[10px] font-bold text-indigo-800 uppercase tracking-wider block mb-2">
+                            <i class="fa-solid fa-arrows-spin text-sm mr-1 animate-spin-slow"></i> เคล็ดลับสุนนะฮ์: ฝึกท่องจำทีละนิด (ฝึกอ่านออกเสียง 3 ครั้ง)
+                        </span>
+                        <div class="flex items-center justify-center gap-4 my-2">
+                            <button onclick="toggleRepetitionStep(1)" id="rep-step-1" class="w-12 h-12 rounded-full border-2 border-indigo-200 text-indigo-500 font-extrabold flex items-center justify-center transition-all">1</button>
+                            <button onclick="toggleRepetitionStep(2)" id="rep-step-2" class="w-12 h-12 rounded-full border-2 border-indigo-200 text-indigo-500 font-extrabold flex items-center justify-center transition-all">2</button>
+                            <button onclick="toggleRepetitionStep(3)" id="rep-step-3" class="w-12 h-12 rounded-full border-2 border-indigo-200 text-indigo-500 font-extrabold flex items-center justify-center transition-all">3</button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">ติ๊กให้ครบ 3 ดวงเพื่อพิสูจน์ความตั้งใจกันเถอะหนูน้อย</p>
+                    </div>
+                </div>
+
+                <!-- Tab content 2: Hadith & Authentic Proof -->
+                <div id="modal-content-hadith" class="hidden">
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
+                        <div class="flex items-center gap-2 mb-2 text-indigo-900 font-extrabold text-xs">
+                            <i class="fa-solid fa-bookmark text-amber-500"></i>
+                            <span>แหล่งอ้างอิงและบันทึกหะดีษ</span>
+                        </div>
+                        <p id="modal-evidence" class="text-slate-600 text-xs leading-relaxed italic"></p>
+                    </div>
+                </div>
+
+                <!-- Reward / Progress Goal Action Trigger -->
+                <div class="pt-3 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+                    <button id="modal-action-btn" onclick="toggleMemorizedDuaFromModal()" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-extrabold px-6 py-4 rounded-2xl shadow-md shadow-amber-100 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 active:translate-y-0 text-base">
+                        <i class="fa-solid fa-star text-lg text-yellow-100 animate-pulse"></i>
+                        <span>หนูจำดุอาอ์นี้ได้แล้ว! รับดาวสะสม ⭐</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Reward Info Modal -->
+    <div id="reward-info-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all">
+        <div class="bg-white rounded-[32px] w-full max-w-md p-6 text-center border border-amber-100 shadow-2xl relative">
+            <div class="absolute right-4 top-4">
+                <button onclick="closeRewardInfo()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="w-20 h-20 mx-auto rounded-full bg-amber-100 text-amber-500 flex items-center justify-center text-4xl mb-4 animate-bounce">
+                👑
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">ตารางความดีของหนูน้อยคนเก่ง</h3>
+            <p class="text-xs text-slate-500 leading-relaxed px-2">
+                ดวงดาวนี้มีค่ามากสำหรับความเพยายามของหนูในการเรียนรู้แบบอย่างจากท่านนบี ยิ่งท่องจำได้มาก หนูก็จะเป็นเด็กดี (อัคลากดีงาม) ที่คนรอบข้างและมะลักประทับใจ!
+            </p>
+            
+            <div class="my-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                <span class="text-[10px] text-amber-800 font-extrabold block mb-1">คะแนนสะสมดวงดาวความตั้งใจทั้งหมด</span>
+                <span id="reward-modal-stars" class="text-3xl font-black text-amber-600 kids-font">0 ดาว ⭐</span>
+            </div>
+
+            <button onclick="closeRewardInfo()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl transition-all shadow-md shadow-indigo-100">
+                สู้ ๆ นะลุยต่อกันเลย!
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal (Replaces old window.confirm popup) -->
+    <div id="reset-confirm-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all">
+        <div class="bg-white rounded-[32px] w-full max-w-md p-6 text-center border border-rose-100 shadow-2xl">
+            <div class="w-16 h-16 mx-auto rounded-full bg-rose-100 text-rose-500 flex items-center justify-center text-2xl mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">คุณแม่แน่ใจใช่ไหมเอ่ย?</h3>
+            <p class="text-xs text-slate-500 leading-relaxed px-4 mb-5">
+                ประวัติการท่องจำดุอาอ์และแต้มดาวสะสมของหนูน้อยจะถูกตั้งค่ากลับเป็นศูนย์เพื่อเริ่มฝึกกันใหม่อีกครั้ง
+            </p>
+            <div class="flex gap-3">
+                <button onclick="closeResetConfirmModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl transition-all text-xs">
+                    ยกเลิกก่อน
+                </button>
+                <button onclick="confirmResetProgress()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 rounded-2xl transition-all text-xs shadow-md shadow-rose-100">
+                    ยืนยันล้างข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Cloud Sync Modal -->
+    <div id="sync-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all">
+        <div class="bg-white rounded-[32px] w-full max-w-md p-6 text-center border border-indigo-100 shadow-2xl relative">
+            <div class="absolute right-4 top-4">
+                <button onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="w-16 h-16 mx-auto rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-3xl mb-4">
+                ☁️
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-1">คลาวด์ซิงก์เซฟคะแนน ☁️</h3>
+            <p class="text-xs text-slate-500 leading-relaxed px-2 mb-4">
+                คุณแม่สามารถเซฟคะแนนดวงดาวและประวัติของน้องไว้เล่นต่อในอุปกรณ์อื่น เช่น ย้ายจากไอแพดไปมือถือได้ง่าย ๆ
+            </p>
+
+            <!-- Display Current Sync Code -->
+            <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-left mb-4">
+                <label class="text-[10px] text-indigo-800 font-extrabold block mb-1">รหัสความก้าวหน้าปัจจุบันของหนู:</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="sync-code-display" readonly value="กำลังเชื่อมต่อออนไลน์..." class="w-full bg-white px-3 py-2 rounded-xl border border-indigo-150 text-xs font-mono font-bold text-indigo-950 focus:outline-none">
+                    <button onclick="copySyncCode()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0">
+                        คัดลอก
+                    </button>
+                </div>
+            </div>
+
+            <!-- Restore from Sync Code -->
+            <div class="p-4 bg-amber-50/40 rounded-2xl border border-amber-100 text-left mb-5">
+                <label class="text-[10px] text-amber-900 font-extrabold block mb-1">สลับอุปกรณ์? นำรหัสจากเครื่องเดิมมาใส่ที่นี่:</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="sync-code-input" placeholder="วางรหัสความก้าวหน้า..." class="w-full bg-white px-3 py-2 rounded-xl border border-amber-200 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-400">
+                    <button onclick="loadCustomSyncCode()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 shadow-sm shadow-amber-100">
+                        ดึงข้อมูล
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="closeSyncModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl transition-all text-xs">
+                ปิดหน้าต่างซิงก์
+            </button>
+        </div>
+    </div>
+
+    <!-- Educational Mother's Quick Tips Box -->
+    <section class="max-w-6xl w-full mx-auto px-4 py-3">
+        <div class="bg-gradient-to-r from-amber-50 to-pink-50/50 border border-amber-200/40 p-5 rounded-3xl text-slate-700 flex flex-col sm:flex-row items-center gap-4">
+            <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shrink-0 border border-amber-100 text-xl shadow-xs">
+                💡
+            </div>
+            <div>
+                <h4 class="text-sm font-bold text-amber-900 mb-1">เคล็ดลับการสอนดุอาอ์ฉบับสุนนะฮ์สำหรับคุณแม่</h4>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    เน้นให้น้อง ๆ ท่องดุอาอ์ก่อนประกอบกิจกรรมจริงเสมอ เช่น สอนดุอาอ์อาหารเมื่อเตรียมตั้งโต๊ะ และชื่นชมเชิดชูความพยายามของน้องด้วยคำว่า <strong class="text-indigo-900">"บารอกัลลอฮุฟีกุม"</strong> เพื่อเพิ่มกำลังใจให้ลูกรักครับ
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- App Footer -->
+    <footer class="w-full bg-indigo-950 text-white py-8 mt-12 border-t border-indigo-900/40">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div>
+                <p class="text-sm font-bold text-indigo-200">✨ Dua Stars - ดวงดาวเรียนรู้ความดีและสุนนะฮ์ท่านนบี</p>
+                <p class="text-xs text-indigo-400 mt-1">คัดสรรข้อมูลความถูกต้องอิงหะดีษอย่างเหมาะสมสูงสุดตามหลักวิชาการสำหรับมุสลิม</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-indigo-300">
+                <span>© 2026 Dua Stars. เพื่อสังคมเยาวชนมุสลิม</span>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase & App Configuration
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dua-stars-kids';
+        let firebaseConfig = {};
+        let db = null;
+        let auth = null;
+        let isOnline = false;
+        let authUser = null;
+        let unsubscribeSync = null;
+
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                isOnline = true;
+            }
+        } catch (e) {
+            console.warn("Firebase config missed or offline environment. Falling back to local offline mode.", e);
+        }
+
+        // Web Audio API Sound Synthesizer (Zero-dependency sound effects generator)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(320, audioCtx.currentTime); 
+                    osc.frequency.exponentialRampToValueAtTime(450, audioCtx.currentTime + 0.1); 
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.12);
+                } else if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); // G5
+                    osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.24); // C6
+                    gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.45);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.45);
+                } else if (type === 'tick') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(580, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.06);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.06);
+                }
+            } catch (e) {
+                console.log("Audio contextual note: ", e);
+            }
+        }
+
+        function pcmToWav(pcm16, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+            const view = new DataView(buffer);
+            
+            const writeString = (view, offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16.length * 2, true);
+
+            let index = 44;
+            for (let i = 0; i < pcm16.length; i++) {
+                view.setInt16(index, pcm16[i], true);
+                index += 2;
+            }
+
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // --- DUAL ENGINE (HYBRID) TEXT TO SPEECH ---
+        function speakText(text, lang = 'ar-SA', speed = 0.85) {
+            try {
+                if (state.currentAudio) {
+                    state.currentAudio.pause();
+                    state.currentAudio = null;
+                }
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+
+                const wave = document.getElementById('voice-wave-container');
+                if (wave && state.activeDuaId) {
+                    wave.classList.remove('hidden');
+                }
+
+                const cleanText = text.trim();
+                const isArabic = lang.startsWith('ar');
+                const cloudLang = isArabic ? 'ar' : 'th';
+
+                const cloudTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${cloudLang}&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
+                
+                const audioPlayer = new Audio();
+                audioPlayer.src = cloudTtsUrl;
+                audioPlayer.playbackRate = speed;
+                state.currentAudio = audioPlayer;
+
+                audioPlayer.onplay = () => {
+                    if (wave && state.activeDuaId) {
+                        wave.classList.remove('hidden');
+                    }
+                };
+
+                audioPlayer.onended = () => {
+                    if (wave) wave.classList.add('hidden');
+                    state.currentAudio = null;
+                };
+
+                audioPlayer.onerror = (e) => {
+                    console.warn("Cloud Speech failed, falling back to browser Native Speech API...", e);
+                    playNativeSpeechFallback(cleanText, lang, speed);
+                };
+
+                audioPlayer.play().catch(err => {
+                    console.warn("Autoplay block, using native fallback...", err);
+                    playNativeSpeechFallback(cleanText, lang, speed);
+                });
+
+            } catch (error) {
+                console.error("Speech service issue: ", error);
+                const wave = document.getElementById('voice-wave-container');
+                if (wave) wave.classList.add('hidden');
+            }
+        }
+
+        async function speakThaiChildVoice(text) {
+            const wave = document.getElementById('voice-wave-container');
+            const thaiBtn = document.getElementById('btn-speak-thai');
+            const btnText = document.getElementById('thai-btn-text');
+            const btnIcon = document.getElementById('thai-btn-icon');
+
+            if (state.currentAudio) {
+                state.currentAudio.pause();
+                state.currentAudio = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            try {
+                thaiBtn.disabled = true;
+                btnText.innerText = "กำลังเตรียมเสียงเด็กน้อย...";
+                btnIcon.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-pink-500"></i>`;
+                if (wave && state.activeDuaId) wave.classList.remove('hidden');
+
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+                const payload = {
+                    contents: [{
+                        parts: [{ 
+                            text: `กรุณาพากย์เสียงสวมบทบาทเป็นเด็กน้อยตัวเล็กน่ารัก สดใส อารมณ์ดี อ่อนโยน และพูดจาชัดถ้อยชัดคำเป็นภาษาไทยเพื่ออ่านความหมายของดุอาอ์ต่อไปนี้: "${text}"` 
+                        }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Leda" } 
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Gemini API request failed");
+                }
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                    let sampleRate = 24000;
+                    const rateMatch = mimeType.match(/rate=(\d+)/);
+                    if (rateMatch) {
+                        sampleRate = parseInt(rateMatch[1], 10);
+                    }
+
+                    const pcmData = base64ToArrayBuffer(audioData);
+                    const pcm16 = new Int16Array(pcmData);
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+
+                    const audioPlayer = new Audio(audioUrl);
+                    state.currentAudio = audioPlayer;
+
+                    audioPlayer.onended = () => {
+                        if (wave) wave.classList.add('hidden');
+                        state.currentAudio = null;
+                    };
+
+                    audioPlayer.onerror = () => {
+                        if (wave) wave.classList.add('hidden');
+                        state.currentAudio = null;
+                        playNativeSpeechFallback(text, 'th-TH', 0.9);
+                    };
+
+                    await audioPlayer.play();
+                } else {
+                    throw new Error("Invalid audio response format");
+                }
+
+            } catch (err) {
+                console.warn("Gemini Live TTS Failed. Falling back to native highly pitched child voice: ", err);
+                playNativeSpeechFallback(text, 'th-TH', 0.9);
+            } finally {
+                thaiBtn.disabled = false;
+                btnText.innerText = "ฟังเสียงเด็กน้อยแปลความหมาย";
+                btnIcon.innerHTML = `<i class="fa-solid fa-baby text-pink-500 text-base animate-bounce"></i>`;
+            }
+        }
+
+        function playNativeSpeechFallback(text, lang, speed) {
+            try {
+                if (!('speechSynthesis' in window)) return;
+
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = speed;
+
+                const voices = window.speechSynthesis.getVoices();
+                if (lang.startsWith('ar')) {
+                    utterance.pitch = 1.15; 
+                    const arabicVoice = voices.find(v => v.lang.startsWith('ar') || v.lang.includes('SA') || v.lang.includes('AE'));
+                    if (arabicVoice) utterance.voice = arabicVoice;
+                } else if (lang.startsWith('th')) {
+                    utterance.pitch = 1.6; 
+                    utterance.rate = 0.92; 
+                    const thaiVoice = voices.find(v => v.lang.startsWith('th') || v.lang.includes('TH'));
+                    if (thaiVoice) utterance.voice = thaiVoice;
+                }
+
+                utterance.onstart = () => {
+                    const wave = document.getElementById('voice-wave-container');
+                    if (wave && state.activeDuaId) wave.classList.remove('hidden');
+                };
+
+                utterance.onend = () => {
+                    const wave = document.getElementById('voice-wave-container');
+                    if (wave) wave.classList.add('hidden');
+                };
+
+                utterance.onerror = () => {
+                    const wave = document.getElementById('voice-wave-container');
+                    if (wave) wave.classList.add('hidden');
+                };
+
+                window.speechSynthesis.speak(utterance);
+            } catch (err) {
+                console.error("Failed completely to fallback native speech: ", err);
+            }
+        }
+
+        function playQuickArabicSpeech(text) {
+            playSound('click');
+            speakText(text, 'ar-SA', 0.82);
+        }
+
+        function playArabicSpeechFromModal() {
+            if (!state.activeDuaId) return;
+            const dua = DUAS_DB.find(d => d.id === state.activeDuaId);
+            if (dua) {
+                speakText(dua.arabic, 'ar-SA', 0.78); 
+            }
+        }
+
+        function playThaiSpeechFromModal() {
+            if (!state.activeDuaId) return;
+            const dua = DUAS_DB.find(d => d.id === state.activeDuaId);
+            if (dua) {
+                speakThaiChildVoice(dua.thaiTranslation);
+            }
+        }
+
+        const DUAS_DB = [
+            {
+                id: "dua_sleeping_before",
+                title: "ดุอาอ์ก่อนเข้านอน",
+                subtitle: "ฝากเรือนร่างและจิตวิญญาณให้อัลลอฮ์คุ้มครองความปลอดภัยยามค่ำคืน",
+                category: "routine",
+                arabic: "بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا",
+                thaiTrans: "บิสมิกะ อัลลอฮุมมะ อะมูตุ วะอะห์ยา",
+                thaiTranslation: "ด้วยพระนามของพระองค์ โอ้อัลลอฮ์ ที่ทำให้ฉันตาย (นอนหลับ) และที่ทำให้ฉันมีชีวิตอยู่ (ตื่นขึ้น)",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 6312) รายงานโดยตรงจากท่านคุซัยฟะฮ์ ร่อฎิยัลลอฮุอันฮุ ถึงจริยวัตรก่อนนอนของท่านนบีมูฮัมหมัด",
+                icon: "fa-bed",
+                colorClass: "from-indigo-50/50 to-indigo-100 hover:shadow-indigo-100 border-indigo-200"
+            },
+            {
+                id: "dua_waking_up",
+                title: "ดุอาอ์เมื่อตื่นนอน",
+                subtitle: "กล่าวขอบคุณที่ประทานชีวิตและลืมตาขึ้นมาอย่างแข็งแรงในเช้าวันใหม่",
+                category: "routine",
+                arabic: "الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ",
+                thaiTrans: "อัลฮัมดู ลิลลาฮิลละซี อะห์ยานา บะอ์ดะ มา อะมาตานา วะอิลัยฮินนุชูร",
+                thaiTranslation: "การสรรเสริญทั้งมวลเป็นเอกสิทธิ์แด่อัลลอฮ์ ผู้ทรงประทานชีวิตใหม่แก่เราหลังทรงให้เราหมดลมชั่วคราว (นอนหลับ) และยังพระองค์คือเป้าหมายในการฟื้นกลับคืน",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 6312) ท่านนบีมักจะกล่าวดุอาอ์นี้เป็นคำแรกหลังตื่นนอนเพื่อเริ่มเช้าที่สว่างไสว",
+                icon: "fa-cloud-sun",
+                colorClass: "from-amber-50/50 to-amber-100 hover:shadow-amber-100 border-amber-200"
+            },
+            {
+                id: "dua_wearing_clothes",
+                title: "ดุอาอ์ขณะสวมใส่เสื้อผ้า",
+                subtitle: "ขอบคุณสิ่งทอที่สวมใส่ปกปิดร่างกายและมอบความงดงาม",
+                category: "routine",
+                arabic: "الْحَمْدُ لِلَّهِ الَّذِي كَسَانِي هَذَا الثَّوْบَ وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",
+                thaiTrans: "อัลฮัมดู ลิลลาฮิลละซี กะซานี ฮาซัษเษาว์บะ วะเราะซะเกาะนีฮิ มินฆ็อยริ เฮาลิน มินนี วะลา กุววะฮ์",
+                thaiTranslation: "การสรรเสริญทั้งมวลเป็นสิทธิ์ของอัลลอฮ์ ผู้ทรงให้ฉันสวมใส่เสื้อผ้านี้ และประทานมันให้ฉัน โดยไม่ได้เกิดจากความรอบรู้หรือกำลังความสามารถของฉันเองเลย",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อะบูดาวุด (เลขที่ 4023) และ อัต-ติรมิซีย์ (เลขที่ 3458) ท่านนบีรับประกันว่าผู้สวมใส่ผ้าแล้วกล่าวดุอาอ์นี้จะได้รับการอภัยในบาปที่ผ่านมา",
+                icon: "fa-shirt",
+                colorClass: "from-purple-50/50 to-purple-100 hover:shadow-purple-100 border-purple-200"
+            },
+            {
+                id: "dua_rain_falling",
+                title: "ดุอาอ์เมื่อฝนตก",
+                subtitle: "วิงวอนขอให้ฝนนี้เป็นน้ำฝนอันจำเริญที่ให้คุณประโยชน์แก่พืชพรรณและผู้คน",
+                category: "routine",
+                arabic: "اللَّهُمَّ صَيِّبًا นَافِعًا",
+                thaiTrans: "อัลลอฮุมมะ ศ็อยยิบัน นาฟิอัน",
+                thaiTranslation: "โอ้อัลลอฮ์ โปรดประทานฝนที่หลั่งไหลลงมาอย่างนำพาคุณประโยชน์แก่เราด้วยเถิด",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 1032) รายงานโดยท่านหญิงอาอิชะฮ์ ร่อฎิยัลลอฮุอันฮา เมื่อเห็นเม็ดฝนตกลงมาจากฟากฟ้าท่านนบีมักจะขอดุอาอ์บทนี้เสมอเพื่อความเป็นสิริมงคล",
+                icon: "fa-cloud-showers-heavy",
+                colorClass: "from-blue-50/50 to-indigo-100 hover:shadow-indigo-100 border-indigo-200"
+            },
+            {
+                id: "dua_thunder_hearing",
+                title: "ดุอาอ์เมื่อได้ยินเสียงฟ้าผ่า",
+                subtitle: "สดุดีความยิ่งใหญ่ของพระเจ้าเมื่อพระองค์สั่งให้สายฟ้าทำงาน",
+                category: "routine",
+                arabic: "سُبْحَانَ الَّذِي يُسَبِّحُ الرَّعْدُ بِحَمْدِهِ وَالْمَلَائِكَةُ مِنْ خِيفَتِهِ",
+                thaiTrans: "สุบหานัลละซี ยุสับบิหุรเราะอ์ดุ บิหัมดิฮี วัลมะลาอิกะตุ มิน คีฟะติฮ์",
+                thaiTranslation: "มหาบริสุทธิ์แด่พระผู้ทรงซึ่งสายฟ้าร้องขับขานสดุดีสรรเสริญพระองค์ และเหล่ามะลาอิกะฮ์ต่างสดุดีพระองค์เนื่องด้วยความยำเกรง",
+                evidence: "บันทึกโดย อิหม่ามมาลิก ใน อัล-มูวัฏเฏาะอ์ (เลขที่ 1801) ด้วยสายสืบที่ศอฮีห์ ท่านอับดุลลอฮ์ บิน อัซ-ซุบัยร์ จะหยุดพูดคุยทันทีเมื่อได้ยินเสียงฟ้าร้อง แล้วกล่าวสรรเสริญด้วยดุอาอ์นี้",
+                icon: "fa-bolt-lightning",
+                colorClass: "from-amber-50/50 to-yellow-100 hover:shadow-yellow-100 border-yellow-200"
+            },
+            {
+                id: "dua_new_clothes",
+                title: "ดุอาอ์เมื่อสวมใส่เสื้อผ้าใหม่",
+                subtitle: "ขอพรเพื่อขอบคุณริซกีและป้องกันหัวใจจากการอวดความร่ำรวย",
+                category: "routine",
+                arabic: "اللَّهُمَّ لَكَ الْحَمْدُ أَنْتَ كَسَوْتَنِيهِ، أَسْأَلُكَ مِنْ خَيْرِهِ وَخَيْرِ مَا صُنِعَ لَهُ، وَأَعُوذُ بِكَ مِنْ شَرِّهِ وَشَرِّ مَا صُنِعَ لَهُ",
+                thaiTrans: "อัลลอฮุมมะ ละกัลหัมดุ อันตะ กะเซาตะนีฮิ, อัสอะลุกะ มิน ค็อยริฮี วะค็อยริ มา ศุนิอะ ละฮู, วะอะอูซุ บิกะ มิน ชัรริฮี วะชัรริ มา ศุนิอะ ละฮู",
+                thaiTranslation: "โอ้อัลลอฮ์ การสรรเสริญทั้งมวลเป็นสิทธิ์แด่พระองค์ พระองค์คือผู้ประทานชุดใหม่นี้แก่ฉัน ฉันขอต่อพระองค์ซึ่งความดีงามของชุดนี้และดีงามของเป้าหมายที่มันถูกตัดเย็บขึ้นมา และขอความคุ้มครองต่อพระองค์ให้พ้นจากความชั่วร้ายของมันและเป้าหมายที่ถูกตัดเย็บขึ้นมา",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อบู ดาวุด (เลขที่ 4020) และ อัต-ติรมิซีย์ (เลขที่ 1767) ท่านนบีสอนให้เด็กๆ ขอบคุณทุกครั้งที่ได้รับเสื้อผ้าชุดใหม่เพื่อหัวใจที่อ่อนโยน",
+                icon: "fa-socks",
+                colorClass: "from-pink-50/50 to-pink-100 hover:shadow-pink-100 border-pink-200"
+            },
+            {
+                id: "dua_eating_before",
+                title: "ดุอาอ์ก่อนรับประทานอาหาร",
+                subtitle: "เริ่มทานอาหารรสอร่อยของขวัญจากพระผู้เป็นเจ้าด้วยความจำเริญ",
+                category: "food",
+                arabic: "بِسْمِ اللَّهِ",
+                thaiTrans: "บิสมิลลาฮ์",
+                thaiTranslation: "ด้วยพระนามของอัลลอฮ์",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 5376) และ มุสลิม (เลขที่ 2022) อัลลอฮ์ทรงสอนให้กล่าวก่อนอาหาร เพื่อไม่ให้สิ่งชั่วร้ายมาร่วมชิงสิทธิ์ในอาหารของเด็กๆ",
+                icon: "fa-cookie-bite",
+                colorClass: "from-sky-50/50 to-sky-100 hover:shadow-sky-100 border-sky-200"
+            },
+            {
+                id: "dua_eating_after",
+                title: "ดุอาอ์หลังอิ่มอาหาร",
+                subtitle: "ขอบพระคุณอัลลอฮ์ที่ประทานอาหารและริซกีอันแสนประเสริฐแก่เรา",
+                category: "food",
+                arabic: "الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",
+                thaiTrans: "อัลฮัมดุ ลิลลาฮิลละซี อัฏอะมะนี ฮาซา วะเราะซะเกาะนีฮิ มิน ฆ็อยริ เฮาลิน มินนี วะลา กุววะฮ์",
+                thaiTranslation: "การสรรเสริญทั้งมวลเป็นสิทธิ์ของอัลลอฮ์ ผู้ทรงให้อาหารนี้แก่ฉัน และทรงประทานมันเป็นริซกีแก่ฉัน โดยปราศจากกำลังและความสามารถใดๆ จากตัวฉันเองเลย",
+                evidence: "หะดีษหะซัน บันทึกโดย อบู ดาวุด (เลขที่ 4023) และอัต-ติรมิซีย์ (เลขที่ 3458) ท่านนบีกล่าวว่า ผู้ใดที่กล่าวบทนี้หลังรับประทานอาหารเสร็จ อัลลอฮ์จะทรงอภัยโทษในบาปกรรมที่ผ่านมาของเขา",
+                icon: "fa-circle-check",
+                colorClass: "from-emerald-50/50 to-emerald-100 hover:shadow-emerald-100 border-emerald-200"
+            },
+            {
+                id: "dua_toilet_enter",
+                title: "ดุอาอ์ก่อนก้าวเข้าห้องน้ำ",
+                subtitle: "สร้างเกราะป้องกันหนูน้อยให้รอดพ้นจากภัยแฝงของชัยฏอนในห้องน้ำ",
+                category: "food",
+                arabic: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْخُبُثِ وَالْخَبَائِثِ",
+                thaiTrans: "อัลลอฮุมมะ อินนี อะอูซุบิกะ มินัล คุบษิ วัลเคาะบาอิษ",
+                thaiTranslation: "โอ้อัลลอฮ์ แท้จริงข้าพระองค์ขอความคุ้มครองต่อพระองค์ท่าน ให้พ้นจากชัยฏอนเพศผู้ (มารร้ายตัวผู้) และชัยฏอนเพศเมีย (มารร้ายตัวเมีย)",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 142) และมุสลิม (เลขที่ 375) รายงานโดยท่านอนัส บิน มาลิก ร่อฎิยัลลอฮุอันฮุ ท่านนบีสอนให้กล่าวขอความคุ้มครองต่ออัลลอฮ์ให้พ้นจากชัยฏอนทั้งเพศผู้และเพศเมียที่มักสิงสถิตอยู่ในสถานที่สกปรกหรือสถานที่ปลดทุกข์",
+                icon: "fa-restroom",
+                colorClass: "from-teal-50/50 to-teal-100 hover:shadow-teal-100 border-teal-200"
+            },
+            {
+                id: "dua_after_milk",
+                title: "ดุอาอ์หลังดื่มนม",
+                subtitle: "ขอบวกพระพรเพิ่มพูนให้ร่างกายของหนูเจริญเติบโตอย่างแข็งแรง",
+                category: "food",
+                arabic: "اللَّهُمَّ بَارِكْ لَنَا فِيهِ وَزِدْنَا مِنْهُ",
+                thaiTrans: "อัลลอฮุมมะ บาริก ละนา ฟีฮิ วะซิดนา มินฮุ",
+                thaiTranslation: "โอ้อัลลอฮ์ โปรดประทานความจำเริญแก่พวกเราในนมนี้ และโปรดเพิ่มพูนปริมาณของมันให้แก่พวกเรามากขึ้นด้วยเถิด",
+                evidence: "หะดีษหะซัน บันทึกโดย อัต-ติรมิซีย์ (เลขที่ 3455) และ อบู ดาวุด (เลขที่ 3730) ท่านนบีกล่าวว่า ไม่มีเครื่องดื่มใดที่ใช้แทนอาหารและน้ำดื่มได้ดีเลิศเท่านม และท่านระบุให้สวดขอเพิ่มพูนนมเสมอ",
+                icon: "fa-glass-water",
+                colorClass: "from-cyan-50/50 to-slate-100 hover:shadow-slate-100 border-slate-200"
+            },
+            {
+                id: "dua_parents",
+                title: "ดุอาอ์ขอพรแด่คุณพ่อคุณแม่",
+                subtitle: "ขอความรักความเอ็นดูจากพระผู้สร้างปกแผ่แด่ผู้เลี้ยงดูอุ้มชูเรา",
+                category: "family",
+                arabic: "رَّبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا",
+                thaiTrans: "ร็อบบิรฮัมฮุมา กะมา ร็อบบะยานี เศาะฆีรอ",
+                thaiTranslation: "โอ้พระผู้อภิบาลของฉัน โปรดประทานความเมตตาปรานีแก่ท่านทั้งสอง เหมือนดั่งที่ท่านเลี้ยงอุ้มชูฉันมาในวัยตัวน้อยอย่างอ่อนโยน",
+                evidence: "พระมหาคัมภีร์อัลกุรอาน ซูเราะฮ์อัลอิสรออ์ (อายะฮ์ที่ 24) อัลลอฮ์ทรงมีบัญชาให้ลูกๆ ขอดุอาอ์ความเมตตาเพื่อตอบแทนพระคุณและการอบรมสั่งเลี้ยงดูของบุพการีตั้งแต่เรายังเป็นเด็กตัวน้อย",
+                icon: "fa-heart",
+                colorClass: "from-rose-50/50 to-rose-100 hover:shadow-rose-100 border-rose-200"
+            },
+            {
+                id: "dua_greeting",
+                title: "การให้สลามต้อนรับผู้คน",
+                subtitle: "มอบความสันติสุขและความอบอุ่นยามพบหน้าพี่น้องครอบครัว",
+                category: "family",
+                arabic: "السَّلَامُ عَلَيْكُمْ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ",
+                thaiTrans: "อัสสลามุอะลัยกุม วะเราะห์มะตุลลอฮิ วะบะรอกาตุฮ์",
+                thaiTranslation: "ขอความสันติ ความเมตตา และความจำเริญจากอัลลอฮ์จงประสบแด่พวกท่านทุกท่าน",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย มุสลิม (เลขที่ 54) ท่านนบีตรัสว่า: 'พวกท่านจะยังไม่ได้เข้าสวรรค์จนกว่าพวกท่านจะมีศรัทธา และพวกท่านจะยังไม่ศรัทธาจนกว่าจะรักใคร่ซึ่งกันและกัน... จงแผ่สลามในหมู่พวกท่านเถิด'",
+                icon: "fa-people-group",
+                colorClass: "from-pink-50/50 to-pink-100 hover:shadow-pink-100 border-pink-200"
+            },
+            {
+                id: "dua_sneezing_etiquette",
+                title: "ดุอาอ์เมื่อจามและกล่าวตอบ",
+                subtitle: "มารยาทน่ารักของหนูเมื่อจามให้ขอบคุณอัลลอฮ์และคนรอบข้างให้พร",
+                category: "family",
+                arabic: "الْحَمْدُ لِلَّهِ (يَقُولُ الْعَاطِسُ) - يَرْحَمُكَ اللَّهُ (يَقُولُ السَّامِعُ)",
+                thaiTrans: "อัลฮัมดุลิลลาฮ์ (คนจามกล่าว) - ยัรฮะมุกัลลอฮ์ (คนฟังกล่าวตอบ)",
+                thaiTranslation: "มวลการสรรเสริญเป็นสิทธิ์ของอัลลอฮ์ - ขออัลลอฮ์ทรงประทานความเมตตาแก่ท่าน",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 6224) ท่านนบีสอนว่า เมื่อมีคนจามแล้วกล่าว อัลฮัมดุลิลลาฮ์ ให้ผู้ได้ยินกล่าวตอบรับ ยัรฮะมุกัลลอฮ์ เพื่อกระชับสายสัมพันธ์ความเมตตาแก่กัน",
+                icon: "fa-face-smile",
+                colorClass: "from-lime-50/50 to-lime-100 hover:shadow-lime-100 border-lime-200"
+            },
+            {
+                id: "dua_mashallah_blessing",
+                title: "ดุอาอ์มาชาอัลลอฮ์ ป้องกันอิจฉา",
+                subtitle: "กล่าวชื่นชมสิ่งสวยงามหรือของถูกใจผู้อื่นเพื่อป้องกันภัยตาอิจฉา",
+                category: "family",
+                arabic: "مَا شَاءَ اللَّهُ لَا قُوَّةَ إِلَّا بِاللَّهِ",
+                thaiTrans: "มาชาอัลลอฮ์ ลา กุววะตะ อิลลา บิลลาฮ์",
+                thaiTranslation: "มันเป็นไปตามที่อัลลอฮ์ทรงประสงค์ ไม่มีพลังความสามารถใดๆ เว้นแต่ด้วยความช่วยเหลือจากอัลลอฮ์",
+                evidence: "พระมหาคัมภีร์อัลกุรอาน ซูเราะฮ์อัลกะฮ์ฟิ (18:39) และบันทึกใน ตัฟซีร อิบนุกะษีร การกล่าวคำนี้เป็นการมอบความดีงามกลับคืนแด่อัลลอฮ์และปกป้องของรักของผู้อื่นจากผลของโรคอิจฉา (อัยน์)",
+                icon: "fa-wand-magic-sparkles",
+                colorClass: "from-violet-50/50 to-violet-100 hover:shadow-violet-100 border-violet-200"
+            },
+            {
+                id: "dua_knowledge",
+                title: "ดุอาอ์ขอเพิ่มพูนความรู้",
+                subtitle: "สวดเพื่อเสริมความจำ ความเข้าใจ และปัญญาอันฉลาดหลักแหลม",
+                category: "knowledge",
+                arabic: "رَّبِّ زِدْنِي عِلْمًا",
+                thaiTrans: "รับบิ ซิดนี อิลมา",
+                thaiTranslation: "โอ้พระผู้อภิบาลของฉัน โปรดเพิ่มพูนความรู้อันมีประโยชน์แก่ฉันอย่างไม่สิ้นสุดด้วยเถิด",
+                evidence: "พระมหาคัมภีร์อัลกุรอาน ซูเราะฮ์ฏอฮา (20:114) เป็นโองการโดยตรงที่อัลลอฮ์ทรงใช้สั่งสอนให้นบีมูฮัมหมัดอธิษฐานจิตวิงวอนขอปัญญาส่องนำทางเสมอ",
+                icon: "fa-brain",
+                colorClass: "from-blue-50/50 to-blue-100 hover:shadow-blue-100 border-blue-200"
+            },
+            {
+                id: "dua_leaving_home",
+                title: "ดุอาอ์ขณะออกจากประตูบ้าน",
+                subtitle: "เมื่อต้องเดินทางไปข้างนอก มอบหมายความปลอดภัยทั้งหมดแด่อัลลอฮ์",
+                category: "knowledge",
+                arabic: "بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+                thaiTrans: "บิสมิลลาฮิ ตะวักกัลตุ อะลัลลอฮ์ วะลาเฮาละ วะลากุววะตะ อิลลา บิลลาฮ์",
+                thaiTranslation: "ด้วยพระนามของอัลลอฮ์ ฉันขอมอบหมายชีวิตต่อพระองค์ และไม่มีกำลังหรืออำนาจใดๆ เกิดขึ้น เว้นแต่มันมาจากอัลลอฮ์",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อะบูดาวุด (เลขที่ 5095) มะลาอิกะฮ์จะกล่าวพิทักษ์แก่ผู้ที่สวดคำนี้ในขณะที่เขาก้าวออกจากบ้านว่า: 'เจ้าได้รับการปกป้องดูแลแล้ว'",
+                icon: "fa-door-open",
+                colorClass: "from-cyan-50/50 to-cyan-100 hover:shadow-cyan-100 border-cyan-200"
+            },
+            {
+                id: "dua_vehicle_riding",
+                title: "ดุอาอ์ขึ้นยานพาหนะเดินทาง",
+                subtitle: "สวดขณะก้าวขึ้นรถหรือซ้อนท้ายเพื่อความจำเริญและขอบคุณพาหนะนำทาง",
+                category: "knowledge",
+                arabic: "سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ وَإِنَّا إِلَى رَبِّنَا لَمُنْقَلِبُونَ",
+                thaiTrans: "สุบหานัลละซี สัคค็อเราะ ละนา ฮาซา วะมา กุนนา ละฮู มุกรินีน, วะอินนา อิลา ร็อบบินา ละมุนเกาะลิบูน",
+                thaiTranslation: "มหาบริสุทธิ์ผู้ทรงบันดาลให้ยานพาหนะนี้มีความสยบและยอมจำนนแก่พวกเรา ทั้งที่ก่อนหน้านี้พวกเราไม่มีแรงความสามารถบังคับมันได้เลย และแท้จริงพวกเราต้องหมุนกลับคืนสู่พระผู้อภิบาลของเราอย่างแน่นอน",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย มุสลิม (เลขที่ 1342) และ อัต-ติรมิซีย์ ท่านนบีส่งเสริมให้อ่านทุกครั้งก่อนติดเครื่องรถยนต์หรือออกเดินทางไกลเพื่อให้รอดพ้นจากอุบัติเหตุภัยร้าย",
+                icon: "fa-car",
+                colorClass: "from-amber-50/50 to-amber-100 hover:shadow-amber-100 border-amber-200"
+            },
+            {
+                id: "dua_difficulty_ease",
+                title: "ดุอาอ์เมื่อเรียนยากหรือกังวล",
+                subtitle: "ขอปัญญาให้เรื่องเรียนยาก ๆ หรือกิจกรรมยาก ๆ กลายเป็นของง่ายดาย",
+                category: "knowledge",
+                arabic: "اللَّهُمَّ لَا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلًا، وَأَنْتَ تَجْعَلُ الْحَزْنَ إِذَا شِئْتَ سَهْلًا",
+                thaiTrans: "อัลลอฮุมมะ ลา ซะห์ละ อิลลา มา จะอัลตะฮู ซะห์ลา, วะอันตะ ตัจญ์อะลุลหัซนะ อิซา ชิอ์ตะ ซะห์ลา",
+                thaiTranslation: "โอ้อัลลอฮ์ ไม่มีสิ่งใดง่ายดายเลยเว้นแต่สิ่งที่พระองค์ทรงบันดาลให้มันง่ายดาย และพระองค์ทรงบันดาลให้สิ่งเศร้าหมอง/เรื่องแสนยากกลายเป็นเรื่องง่ายได้เมื่อพระองค์ประสงค์",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย อิบนุ หิบบาน (เลขที่ 970) เหมาะเป็นอย่างยิ่งที่คุณแม่จะสอนให้ลูกเรียนรู้ที่จะพึ่งพาความรู้ของอัลลอฮ์ทุกครั้งก่อนเริ่มสอบหรือหัดการบ้านยากๆ",
+                icon: "fa-pencil",
+                colorClass: "from-fuchsia-50/50 to-fuchsia-100 hover:shadow-fuchsia-100 border-fuchsia-200"
+            },
+            {
+                id: "dua_masjid_enter",
+                title: "ดุอาอ์เมื่อก้าวเข้ามัสยิด",
+                subtitle: "เริ่มก้าวเท้าขวาเข้าสู่มัสยิดด้วยจิตใจที่ขอความโปรดปรานความดีงาม",
+                category: "knowledge",
+                arabic: "اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",
+                thaiTrans: "อัลลอฮุมมัฟตะห์ ลี อับวาบะ เราะห์มะติก",
+                thaiTranslation: "โอ้อัลลอฮ์ โปรดเปิดประตูแห่งความเมตตาอันพรั่งพรูของพระองค์ท่านให้แก่ฉันด้วยเถิด",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย มุสลิม (เลขที่ 713) ท่านนบีเน้นย้ำให้กล่าวคำนี้ขณะก้าวเท้าขวาสู่มัสยิดเพื่อสะสมความสุขและจริยวัตรที่ดีงามในสถานศักดิ์สิทธิ์",
+                icon: "fa-mosque",
+                colorClass: "from-emerald-50/50 to-teal-100 hover:shadow-teal-100 border-teal-200"
+            },
+            {
+                id: "dua_protection_evil",
+                title: "ดุอาอ์คุ้มครองป้องกันภัยตัวน้อย",
+                subtitle: "ใช้ถ้อยคำอันทรงเกียรติของอัลลอฮ์คุ้มครองจากสิ่งชั่วร้ายและสัตว์ร้าย",
+                category: "knowledge",
+                arabic: "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",
+                thaiTrans: "อะอูซุ บิกะลิมาติลลาฮิตตามมาติ มิน ชัรริ มา เคาะลัก",
+                thaiTranslation: "ฉันขอความพิทักษ์คุ้มครองด้วยถ้อยคำของอัลลอฮ์อันสมบูรณ์ครบถ้วน ให้พ้นจากความชั่วร้ายของมวลสรรพสิ่งที่พระองค์ทรงสร้างขึ้นมา",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย มุสลิม (เลขที่ 2708) ท่านนบีกล่าวรับรองว่าใครก็ตามที่กล่าวบทนี้ในจุดจอดแวะหรือยามเดินทาง จะไม่มีอันตรายใด ๆ แผ้วพานเขาจนกว่าเขาจะออกเดินทางต่อไป",
+                icon: "fa-shield-halved",
+                colorClass: "from-rose-50/50 to-orange-100 hover:shadow-orange-100 border-orange-200"
+            }
+        ];
+
+        let state = {
+            currentCategory: 'all',
+            searchQuery: '',
+            memorizedDuas: [], 
+            starsCount: 0,
+            activeDuaId: null,
+            activeModalTab: 'reading',
+            repetitionTracker: { 1: false, 2: false, 3: false },
+            currentAudio: null,
+            chosenMascot: { emoji: '⭐️', name: 'ดาราน้อย' },
+            syncUserId: null
+        };
+
+        // Custom alerts instead of browser native alert()
+        function alertModal(message) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl z-50 text-xs font-bold animate-bounce";
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // --- CLOUD SYNC & LOCAL PERSISTENCE SYSTEM ---
+        async function saveProgressState() {
+            // Local fallback saving
+            localStorage.setItem('dua_stars_count', state.starsCount);
+            localStorage.setItem('dua_memorized_list', JSON.stringify(state.memorizedDuas));
+            localStorage.setItem('dua_mascot', JSON.stringify(state.chosenMascot));
+
+            // Online database syncing
+            if (isOnline && authUser) {
+                const targetUid = state.syncUserId || authUser.uid;
+                const docRef = doc(db, 'artifacts', appId, 'users', targetUid, 'progress', 'current');
+                try {
+                    await setDoc(docRef, {
+                        starsCount: state.starsCount,
+                        memorizedDuas: state.memorizedDuas,
+                        chosenMascot: state.chosenMascot,
+                        lastUpdated: new Date().toISOString()
+                    }, { merge: true });
+                } catch (e) {
+                    console.error("Cloud saving sync failed:", e);
+                }
+            }
+        }
+
+        function loadFromLocalStorage() {
+            const savedStars = localStorage.getItem('dua_stars_count');
+            const savedDuas = localStorage.getItem('dua_memorized_list');
+            const savedMascot = localStorage.getItem('dua_mascot');
+            const savedCustomSync = localStorage.getItem('dua_sync_user_id');
+
+            if (savedStars) state.starsCount = parseInt(savedStars, 10);
+            if (savedDuas) {
+                try { state.memorizedDuas = JSON.parse(savedDuas); } catch (e) { state.memorizedDuas = []; }
+            }
+            if (savedMascot) {
+                try { state.chosenMascot = JSON.parse(savedMascot); } catch (e) { state.chosenMascot = { emoji: '⭐️', name: 'ดาราน้อย' }; }
+            }
+            if (savedCustomSync) {
+                state.syncUserId = savedCustomSync;
+            }
+            
+            applyMascotUI();
+            updateDashboardUI();
+        }
+
+        // Real-time listener for multi-device instant sync
+        function setupRealtimeSync(uid) {
+            if (unsubscribeSync) unsubscribeSync();
+            if (!isOnline) return;
+
+            const docRef = doc(db, 'artifacts', appId, 'users', uid, 'progress', 'current');
+            
+            unsubscribeSync = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    state.starsCount = data.starsCount || 0;
+                    state.memorizedDuas = data.memorizedDuas || [];
+                    state.chosenMascot = data.chosenMascot || { emoji: '⭐️', name: 'ดาราน้อย' };
+                    
+                    applyMascotUI();
+                    updateDashboardUI();
+                    renderDuas();
+                } else {
+                    // Sync initial offline local data to newly online account
+                    saveProgressState();
+                }
+            }, (error) => {
+                console.warn("Real-time cloud database snapshot error:", error);
+            });
+
+            // Put active Sync code in UI
+            const syncDisplay = document.getElementById('sync-code-display');
+            if (syncDisplay) {
+                syncDisplay.value = uid;
+            }
+        }
+
+        // --- AUTHENTICATION INIT (RULE 3) ---
+        async function initOnlineSession() {
+            if (!isOnline) {
+                const syncDisplay = document.getElementById('sync-code-display');
+                if (syncDisplay) syncDisplay.value = "โหมดออฟไลน์ใช้งานบนเครื่องนี้เท่านั้น";
+                return;
+            }
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth custom token issue, fallback to anonymous:", err);
+                try {
+                    await signInAnonymously(auth);
+                } catch (e2) {
+                    console.error("Auth failed completely. Fallback to local mode.", e2);
+                }
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    authUser = user;
+                    const syncIdToUse = state.syncUserId || user.uid;
+                    setupRealtimeSync(syncIdToUse);
+                }
+            });
+        }
+
+        // Copy Sync Code securely without modern Navigator restriction issues
+        function copySyncCode() {
+            playSound('click');
+            const syncCodeVal = document.getElementById('sync-code-display').value;
+            if (!syncCodeVal || syncCodeVal.startsWith("กำลัง") || syncCodeVal.startsWith("โหมด")) {
+                alertModal("กรุณารอเชื่อมต่อออนไลน์สักครู่นะคะ...");
+                return;
+            }
+
+            const tempInput = document.createElement('input');
+            tempInput.value = syncCodeVal;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            alertModal("คัดลอกรหัสเซฟคลาวด์แล้ว นำไปวางในเครื่องใหม่ได้เลยครับ! 📋");
+        }
+
+        // Load sync data from other device code
+        async function loadCustomSyncCode() {
+            playSound('click');
+            const codeInput = document.getElementById('sync-code-input').value.trim();
+            if (!codeInput) {
+                alertModal("กรุณากรอกรหัสความก้าวหน้าก่อนนะคะ");
+                return;
+            }
+
+            if (!isOnline) {
+                alertModal("ระบบไม่ได้เชื่อมต่อออนไลน์ในขณะนี้");
+                return;
+            }
+
+            const docRef = doc(db, 'artifacts', appId, 'users', codeInput, 'progress', 'current');
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    state.syncUserId = codeInput;
+                    localStorage.setItem('dua_sync_user_id', codeInput);
+                    setupRealtimeSync(codeInput);
+                    playSound('success');
+                    triggerConfetti();
+                    closeSyncModal();
+                    alertModal("ดึงประวัติความสำเร็จจากคลาวด์เรียบร้อยแล้วครับ! 🌟");
+                } else {
+                    alertModal("ไม่พบรหัสคลาวด์นี้ กรุณาตรวจสอบความถูกต้องอีกครั้งนะคะ");
+                }
+            } catch (e) {
+                console.error("Fetch custom sync profile error:", e);
+                alertModal("เกิดปัญหาในการดึงข้อมูลจากระบบออนไลน์");
+            }
+        }
+
+        // --- UI & INTERACTION MAPPINGS ---
+        function openAvatarSelector() {
+            playSound('tick');
+            const panel = document.getElementById('avatar-selector');
+            panel.style.maxHeight = panel.style.maxHeight === '300px' ? '0px' : '300px';
+        }
+
+        function closeAvatarSelector() {
+            playSound('tick');
+            document.getElementById('avatar-selector').style.maxHeight = '0px';
+        }
+
+        function setAvatar(emoji, name) {
+            playSound('success');
+            state.chosenMascot = { emoji, name };
+            saveProgressState();
+            applyMascotUI();
+            closeAvatarSelector();
+            triggerConfetti();
+        }
+
+        function applyMascotUI() {
+            document.getElementById('header-avatar').innerText = state.chosenMascot.emoji;
+            document.getElementById('header-avatar-name').innerText = state.chosenMascot.name;
+            document.getElementById('welcome-mascot-name').innerText = state.chosenMascot.name;
+            document.getElementById('hero-mascot-emoji').innerText = state.chosenMascot.emoji;
+        }
+
+        function renderDuas() {
+            const grid = document.getElementById('duas-grid');
+            const emptyState = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            let filtered = DUAS_DB.filter(dua => {
+                const matchesCat = state.currentCategory === 'all' || dua.category === state.currentCategory;
+                const matchesSearch = dua.title.toLowerCase().includes(state.searchQuery.toLowerCase()) || 
+                                      dua.subtitle.toLowerCase().includes(state.searchQuery.toLowerCase()) || 
+                                      dua.thaiTrans.toLowerCase().includes(state.searchQuery.toLowerCase());
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                grid.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(dua => {
+                const isMemorized = state.memorizedDuas.includes(dua.id);
+                
+                const card = document.createElement('div');
+                card.className = `p-6 rounded-[28px] border-2 ${dua.colorClass} bg-gradient-to-tr shadow-sm hover:shadow-md cursor-pointer transform hover:-translate-y-1.5 active:scale-98 transition-all duration-200 flex flex-col justify-between relative group overflow-hidden`;
+                card.setAttribute('onclick', `openDuaModal('${dua.id}')`);
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Card Header -->
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-indigo-950 shadow-2xs border border-indigo-50 text-base">
+                                <i class="fa-solid ${dua.icon}"></i>
+                            </span>
+                            
+                            <!-- Star Badge indicator -->
+                            <div class="flex items-center gap-1">
+                                <button onclick="event.stopPropagation(); window.playQuickArabicSpeech('${dua.arabic.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-50 text-indigo-600 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="ฟังเสียง">
+                                    <i class="fa-solid fa-volume-high text-xs"></i>
+                                </button>
+                                ${isMemorized ? `
+                                    <span class="bg-amber-100/90 text-amber-900 text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-2xs border border-amber-200">
+                                        <i class="fa-solid fa-star text-amber-500 animate-pulse"></i> ท่องจำแล้ว
+                                    </span>
+                                ` : `
+                                    <span class="bg-slate-50 text-slate-400 text-[10px] px-2 py-1 rounded-full font-bold">ฝึกซ้อม</span>
+                                `}
+                            </div>
+                        </div>
+
+                        <!-- Card Content Titles -->
+                        <h4 class="font-extrabold text-slate-800 text-base leading-tight group-hover:text-indigo-950 transition-colors">${dua.title}</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed line-clamp-2">${dua.subtitle}</p>
+
+                        <!-- Arabic Text Preview Line -->
+                        <div class="my-4 text-right">
+                            <span class="arabic-font text-xl text-slate-900 font-extrabold block line-clamp-1 truncate select-none opacity-90">${dua.arabic}</span>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Action Guide -->
+                    <div class="mt-2 border-t border-slate-100 pt-3 flex items-center justify-between">
+                        <span class="text-xs text-indigo-600 font-extrabold group-hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-graduation-cap"></i> ฝึกสอนลูกอ่านตามสุนนะฮ์
+                        </span>
+                        <div class="w-7 h-7 rounded-full bg-white flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-3xs">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            updateCategoryBadgeCounts();
+        }
+
+        function filterDuas() {
+            state.searchQuery = document.getElementById('search-input').value;
+            renderDuas();
+        }
+
+        function changeCategory(cat) {
+            playSound('click');
+            state.currentCategory = cat;
+            
+            document.querySelectorAll('.category-pill').forEach(btn => {
+                btn.className = "category-pill whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-white text-slate-600 hover:text-slate-900 border-2 border-indigo-50 hover:border-indigo-100";
+            });
+
+            const activeBtn = document.getElementById(`tab-${cat}`);
+            if (activeBtn) {
+                activeBtn.className = "category-pill active-tab whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-indigo-600 text-white border-2 border-indigo-600";
+            }
+
+            renderDuas();
+        }
+
+        function updateCategoryBadgeCounts() {
+            document.getElementById('badge-all').innerText = DUAS_DB.length;
+            const categories = ['routine', 'food', 'family', 'knowledge'];
+            categories.forEach(cat => {
+                const count = DUAS_DB.filter(d => d.category === cat).length;
+                const badge = document.getElementById(`badge-${cat}`);
+                if (badge) badge.innerText = count;
+            });
+        }
+
+        function openDuaModal(id) {
+            playSound('click');
+            const dua = DUAS_DB.find(d => d.id === id);
+            if (!dua) return;
+
+            state.activeDuaId = id;
+            state.repetitionTracker = { 1: false, 2: false, 3: false };
+            updateRepetitionUI();
+            switchModalTab('reading'); 
+
+            document.getElementById('modal-title').innerText = dua.title;
+            document.getElementById('modal-subtitle').innerText = dua.subtitle;
+            document.getElementById('modal-arabic').innerText = dua.arabic;
+            document.getElementById('modal-trans').innerText = dua.thaiTrans;
+            document.getElementById('modal-translation').innerText = dua.thaiTranslation;
+            document.getElementById('modal-evidence').innerText = dua.evidence;
+
+            const wave = document.getElementById('voice-wave-container');
+            if (wave) wave.classList.add('hidden');
+
+            const catBadge = document.getElementById('modal-category-badge');
+            const catLabel = { routine: 'ยามเช้าและกลางคืน', food: 'กินดื่มและร่างกาย', family: 'ครอบครัว', knowledge: 'ความรู้และการคุ้มครอง' }[dua.category];
+            catBadge.innerText = catLabel || 'ทั่วไป';
+
+            const isAlreadyMemorized = state.memorizedDuas.includes(id);
+            const memorizedBadge = document.getElementById('modal-memorized-badge');
+            const actionBtn = document.getElementById('modal-action-btn');
+
+            if (isAlreadyMemorized) {
+                memorizedBadge.classList.remove('hidden');
+                memorizedBadge.classList.add('inline-flex');
+                actionBtn.innerHTML = `<i class="fa-solid fa-trash-can mr-2"></i> เอาปุ่มรางวัลท่องจำดาวออก`;
+                actionBtn.className = "flex-1 bg-gradient-to-r from-rose-500 to-rose-600 text-white font-extrabold px-6 py-4 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all text-base";
+            } else {
+                memorizedBadge.classList.add('hidden');
+                memorizedBadge.classList.remove('inline-flex');
+                actionBtn.innerHTML = `<i class="fa-solid fa-star text-lg text-yellow-300 animate-spin-slow"></i> หนูจำดุอาอ์นี้ได้แล้ว! รับดาวสะสม ⭐`;
+                actionBtn.className = "flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-extrabold px-6 py-4 rounded-2xl shadow-md shadow-amber-100 flex items-center justify-center gap-2 transition-all text-base";
+            }
+
+            const modal = document.getElementById('dua-modal');
+            const modalContent = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+
+            setTimeout(() => {
+                playArabicSpeechFromModal();
+            }, 300);
+        }
+
+        function closeModal() {
+            playSound('tick');
+            if (state.currentAudio) {
+                state.currentAudio.pause();
+                state.currentAudio = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            const modal = document.getElementById('dua-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+            
+            state.activeDuaId = null;
+        }
+
+        function switchModalTab(tabName) {
+            playSound('tick');
+            state.activeModalTab = tabName;
+
+            document.querySelectorAll('.modal-tab').forEach(tab => {
+                tab.classList.remove('active-modal-tab', 'text-indigo-600', 'border-b-2', 'border-indigo-600');
+                tab.classList.add('text-slate-400');
+            });
+
+            const activeTab = document.getElementById(`modal-tab-${tabName}`);
+            activeTab.classList.remove('text-slate-400');
+            activeTab.classList.add('active-modal-tab', 'text-indigo-600', 'border-b-2', 'border-indigo-600');
+
+            if (tabName === 'reading') {
+                document.getElementById('modal-content-reading').classList.remove('hidden');
+                document.getElementById('modal-content-hadith').classList.add('hidden');
+            } else {
+                document.getElementById('modal-content-reading').classList.add('hidden');
+                document.getElementById('modal-content-hadith').classList.remove('hidden');
+            }
+        }
+
+        function toggleRepetitionStep(step) {
+            playSound('tick');
+            state.repetitionTracker[step] = !state.repetitionTracker[step];
+            updateRepetitionUI();
+            
+            if (state.repetitionTracker[1] && state.repetitionTracker[2] && state.repetitionTracker[3]) {
+                playSound('success');
+                triggerConfetti();
+            }
+        }
+
+        function updateRepetitionUI() {
+            for (let step = 1; step <= 3; step++) {
+                const btn = document.getElementById(`rep-step-${step}`);
+                if (state.repetitionTracker[step]) {
+                    btn.className = "w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center font-extrabold text-base scale-105 shadow-inner border-2 border-indigo-300";
+                } else {
+                    btn.className = "w-12 h-12 rounded-full border-2 border-indigo-200 text-indigo-500 hover:bg-indigo-50/50 flex items-center justify-center font-extrabold text-base";
+                }
+            }
+        }
+
+        function toggleMemorizedDuaFromModal() {
+            if (!state.activeDuaId) return;
+            const duaId = state.activeDuaId;
+            const index = state.memorizedDuas.indexOf(duaId);
+
+            if (index > -1) {
+                state.memorizedDuas.splice(index, 1);
+                if (state.starsCount >= 5) state.starsCount -= 5;
+                playSound('tick');
+            } else {
+                state.memorizedDuas.push(duaId);
+                state.starsCount += 5;
+                playSound('success');
+                triggerConfetti();
+            }
+
+            saveProgressState();
+            updateDashboardUI();
+            
+            openDuaModal(duaId);
+            renderDuas();
+        }
+
+        function updateDashboardUI() {
+            const count = state.memorizedDuas.length;
+            const total = DUAS_DB.length;
+            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+
+            document.getElementById('star-count').innerText = state.starsCount;
+            document.getElementById('dashboard-progress-text').innerText = `${count} / ${total} ดุอาอ์`;
+            document.getElementById('progress-bar-fill').style.width = `${percent}%`;
+            document.getElementById('progress-percent-text').innerText = `${percent}%`;
+        }
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 100,
+                spread: 80,
+                origin: { y: 0.6 },
+                colors: ['#FBBF24', '#A78BFA', '#F472B6', '#60A5FA', '#34D399']
+            });
+        }
+
+        function showRewardInfo() {
+            playSound('click');
+            document.getElementById('reward-modal-stars').innerText = `${state.starsCount} ⭐`;
+            document.getElementById('reward-info-modal').classList.remove('hidden');
+        }
+
+        function closeRewardInfo() {
+            playSound('tick');
+            document.getElementById('reward-info-modal').classList.add('hidden');
+        }
+
+        function showResetConfirmModal() {
+            playSound('click');
+            document.getElementById('reset-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeResetConfirmModal() {
+            playSound('tick');
+            document.getElementById('reset-confirm-modal').classList.add('hidden');
+        }
+
+        function confirmResetProgress() {
+            playSound('success');
+            state.memorizedDuas = [];
+            state.starsCount = 0;
+            state.syncUserId = null;
+            localStorage.removeItem('dua_sync_user_id');
+            saveProgressState();
+            updateDashboardUI();
+            renderDuas();
+            closeResetConfirmModal();
+            if (isOnline && authUser) {
+                setupRealtimeSync(authUser.uid);
+            }
+        }
+
+        function openSyncModal() {
+            playSound('click');
+            document.getElementById('sync-modal').classList.remove('hidden');
+        }
+
+        function closeSyncModal() {
+            playSound('tick');
+            document.getElementById('sync-modal').classList.add('hidden');
+        }
+
+        // Window mapping to expose ES6 module functions to inline HTML attributes
+        window.changeCategory = changeCategory;
+        window.openAvatarSelector = openAvatarSelector;
+        window.closeAvatarSelector = closeAvatarSelector;
+        window.setAvatar = setAvatar;
+        window.filterDuas = filterDuas;
+        window.openDuaModal = openDuaModal;
+        window.closeModal = closeModal;
+        window.switchModalTab = switchModalTab;
+        window.toggleRepetitionStep = toggleRepetitionStep;
+        window.toggleMemorizedDuaFromModal = toggleMemorizedDuaFromModal;
+        window.showRewardInfo = showRewardInfo;
+        window.closeRewardInfo = closeRewardInfo;
+        window.showResetConfirmModal = showResetConfirmModal;
+        window.closeResetConfirmModal = closeResetConfirmModal;
+        window.confirmResetProgress = confirmResetProgress;
+        window.playQuickArabicSpeech = playQuickArabicSpeech;
+        window.playArabicSpeechFromModal = playArabicSpeechFromModal;
+        window.playThaiSpeechFromModal = playThaiSpeechFromModal;
+        window.openSyncModal = openSyncModal;
+        window.closeSyncModal = closeSyncModal;
+        window.copySyncCode = copySyncCode;
+        window.loadCustomSyncCode = loadCustomSyncCode;
+
+        // Close modals on background backdrop click
+        window.onclick = function(event) {
+            const modal = document.getElementById('dua-modal');
+            const rewardModal = document.getElementById('reward-info-modal');
+            const confirmModal = document.getElementById('reset-confirm-modal');
+            const syncModal = document.getElementById('sync-modal');
+            
+            if (event.target === modal) closeModal();
+            if (event.target === rewardModal) closeRewardInfo();
+            if (event.target === confirmModal) closeResetConfirmModal();
+            if (event.target === syncModal) closeSyncModal();
+        };
+
+        // On Load initialization
+        window.onload = function() {
+            loadFromLocalStorage();
+            renderDuas();
+            initOnlineSession();
+            
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+                if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+                }
+            }
+        };
+    </script>
+</body>
+</html>
