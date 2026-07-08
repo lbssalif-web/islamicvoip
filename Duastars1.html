@@ -86,6 +86,11 @@
             <!-- Dashboard Mascot & Score Badge -->
             <div class="flex items-center gap-3">
                 
+                <!-- Cloud Sync Button -->
+                <button onclick="openSyncModal()" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs text-indigo-950 font-bold text-xs">
+                    <span>☁️</span> <span class="hidden md:inline">คลาวด์ซิงก์</span>
+                </button>
+                
                 <!-- Avatar Select Trigger -->
                 <div onclick="openAvatarSelector()" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs">
                     <span id="header-avatar" class="text-xl">⭐️</span>
@@ -421,6 +426,48 @@
         </div>
     </div>
 
+    <!-- Custom Cloud Sync Modal -->
+    <div id="sync-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all">
+        <div class="bg-white rounded-[32px] w-full max-w-md p-6 text-center border border-indigo-100 shadow-2xl relative">
+            <div class="absolute right-4 top-4">
+                <button onclick="closeSyncModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="w-16 h-16 mx-auto rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-3xl mb-4">
+                ☁️
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-1">คลาวด์ซิงก์เซฟคะแนน ☁️</h3>
+            <p class="text-xs text-slate-500 leading-relaxed px-2 mb-4">
+                คุณแม่สามารถเซฟคะแนนดวงดาวและประวัติของน้องไว้เล่นต่อในอุปกรณ์อื่น เช่น ย้ายจากไอแพดไปมือถือได้ง่าย ๆ
+            </p>
+
+            <!-- Display Current Sync Code -->
+            <div class="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 text-left mb-4">
+                <label class="text-[10px] text-indigo-800 font-extrabold block mb-1">รหัสความก้าวหน้าปัจจุบันของหนู:</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="sync-code-display" readonly value="กำลังเชื่อมต่อออนไลน์..." class="w-full bg-white px-3 py-2 rounded-xl border border-indigo-150 text-xs font-mono font-bold text-indigo-950 focus:outline-none">
+                    <button onclick="copySyncCode()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0">
+                        คัดลอก
+                    </button>
+                </div>
+            </div>
+
+            <!-- Restore from Sync Code -->
+            <div class="p-4 bg-amber-50/40 rounded-2xl border border-amber-100 text-left mb-5">
+                <label class="text-[10px] text-amber-900 font-extrabold block mb-1">สลับอุปกรณ์? นำรหัสจากเครื่องเดิมมาใส่ที่นี่:</label>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="sync-code-input" placeholder="วางรหัสความก้าวหน้า..." class="w-full bg-white px-3 py-2 rounded-xl border border-amber-200 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-400">
+                    <button onclick="loadCustomSyncCode()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shrink-0 shadow-sm shadow-amber-100">
+                        ดึงข้อมูล
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="closeSyncModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-2xl transition-all text-xs">
+                ปิดหน้าต่างซิงก์
+            </button>
+        </div>
+    </div>
+
     <!-- Educational Mother's Quick Tips Box -->
     <section class="max-w-6xl w-full mx-auto px-4 py-3">
         <div class="bg-gradient-to-r from-amber-50 to-pink-50/50 border border-amber-200/40 p-5 rounded-3xl text-slate-700 flex flex-col sm:flex-row items-center gap-4">
@@ -449,7 +496,32 @@
         </div>
     </footer>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase & App Configuration
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dua-stars-kids';
+        let firebaseConfig = {};
+        let db = null;
+        let auth = null;
+        let isOnline = false;
+        let authUser = null;
+        let unsubscribeSync = null;
+
+        try {
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                isOnline = true;
+            }
+        } catch (e) {
+            console.warn("Firebase config missed or offline environment. Falling back to local offline mode.", e);
+        }
+
         // Web Audio API Sound Synthesizer (Zero-dependency sound effects generator)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
@@ -474,7 +546,6 @@
                     osc.stop(audioCtx.currentTime + 0.12);
                 } else if (type === 'success') {
                     osc.type = 'sine';
-                    // Arpeggio sound
                     osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
                     osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
                     osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); // G5
@@ -496,7 +567,6 @@
             }
         }
 
-        // Helper to convert signed PCM16 data into playable standard WAV container
         function pcmToWav(pcm16, sampleRate) {
             const buffer = new ArrayBuffer(44 + pcm16.length * 2);
             const view = new DataView(buffer);
@@ -507,34 +577,20 @@
                 }
             };
 
-            /* RIFF identifier */
             writeString(view, 0, 'RIFF');
-            /* file length */
             view.setUint32(4, 36 + pcm16.length * 2, true);
-            /* RIFF type */
             writeString(view, 8, 'WAVE');
-            /* format chunk identifier */
             writeString(view, 12, 'fmt ');
-            /* format chunk length */
             view.setUint32(16, 16, true);
-            /* sample format (PCM = 1) */
             view.setUint16(20, 1, true);
-            /* channel count (mono = 1) */
             view.setUint16(22, 1, true);
-            /* sample rate */
             view.setUint32(24, sampleRate, true);
-            /* byte rate (sample rate * block align) */
             view.setUint32(28, sampleRate * 2, true);
-            /* block align */
             view.setUint16(32, 2, true);
-            /* bits per sample */
             view.setUint16(34, 16, true);
-            /* data chunk identifier */
             writeString(view, 36, 'data');
-            /* data chunk length */
             view.setUint32(40, pcm16.length * 2, true);
 
-            // Write raw PCM16 samples sequentially
             let index = 44;
             for (let i = 0; i < pcm16.length; i++) {
                 view.setInt16(index, pcm16[i], true);
@@ -574,7 +630,6 @@
                 const isArabic = lang.startsWith('ar');
                 const cloudLang = isArabic ? 'ar' : 'th';
 
-                // High-Quality Cloud Audio
                 const cloudTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${cloudLang}&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
                 
                 const audioPlayer = new Audio();
@@ -616,7 +671,6 @@
             const btnText = document.getElementById('thai-btn-text');
             const btnIcon = document.getElementById('thai-btn-icon');
 
-            // Reset current audios
             if (state.currentAudio) {
                 state.currentAudio.pause();
                 state.currentAudio = null;
@@ -626,13 +680,12 @@
             }
 
             try {
-                // Show loading state on button
                 thaiBtn.disabled = true;
                 btnText.innerText = "กำลังเตรียมเสียงเด็กน้อย...";
                 btnIcon.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-pink-500"></i>`;
                 if (wave && state.activeDuaId) wave.classList.remove('hidden');
 
-                const apiKey = ""; // Left empty to let Canvas auto-provide at runtime
+                const apiKey = ""; 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
 
                 const payload = {
@@ -645,7 +698,7 @@
                         responseModalities: ["AUDIO"],
                         speechConfig: {
                             voiceConfig: {
-                                prebuiltVoiceConfig: { voiceName: "Leda" } // Youthful bright voice
+                                prebuiltVoiceConfig: { voiceName: "Leda" } 
                             }
                         }
                     },
@@ -668,20 +721,17 @@
                 const mimeType = part?.inlineData?.mimeType;
 
                 if (audioData && mimeType && mimeType.startsWith("audio/")) {
-                    // Match sampling rate from mimetype (usually rate=24000)
                     let sampleRate = 24000;
                     const rateMatch = mimeType.match(/rate=(\d+)/);
                     if (rateMatch) {
                         sampleRate = parseInt(rateMatch[1], 10);
                     }
 
-                    // Compile raw binary PCM to WAV
                     const pcmData = base64ToArrayBuffer(audioData);
                     const pcm16 = new Int16Array(pcmData);
                     const wavBlob = pcmToWav(pcm16, sampleRate);
                     const audioUrl = URL.createObjectURL(wavBlob);
 
-                    // Play compiled wav audio
                     const audioPlayer = new Audio(audioUrl);
                     state.currentAudio = audioPlayer;
 
@@ -693,7 +743,6 @@
                     audioPlayer.onerror = () => {
                         if (wave) wave.classList.add('hidden');
                         state.currentAudio = null;
-                        // Local Speech fallback on play error
                         playNativeSpeechFallback(text, 'th-TH', 0.9);
                     };
 
@@ -706,7 +755,6 @@
                 console.warn("Gemini Live TTS Failed. Falling back to native highly pitched child voice: ", err);
                 playNativeSpeechFallback(text, 'th-TH', 0.9);
             } finally {
-                // Restore button state
                 thaiBtn.disabled = false;
                 btnText.innerText = "ฟังเสียงเด็กน้อยแปลความหมาย";
                 btnIcon.innerHTML = `<i class="fa-solid fa-baby text-pink-500 text-base animate-bounce"></i>`;
@@ -723,13 +771,12 @@
 
                 const voices = window.speechSynthesis.getVoices();
                 if (lang.startsWith('ar')) {
-                    utterance.pitch = 1.15; // Standard warm voice
+                    utterance.pitch = 1.15; 
                     const arabicVoice = voices.find(v => v.lang.startsWith('ar') || v.lang.includes('SA') || v.lang.includes('AE'));
                     if (arabicVoice) utterance.voice = arabicVoice;
                 } else if (lang.startsWith('th')) {
-                    // Elevate Pitch heavily to emulate a tiny kid's voice naturally
                     utterance.pitch = 1.6; 
-                    utterance.rate = 0.92; // Slightly cute and slower tempo
+                    utterance.rate = 0.92; 
                     const thaiVoice = voices.find(v => v.lang.startsWith('th') || v.lang.includes('TH'));
                     if (thaiVoice) utterance.voice = thaiVoice;
                 }
@@ -764,7 +811,7 @@
             if (!state.activeDuaId) return;
             const dua = DUAS_DB.find(d => d.id === state.activeDuaId);
             if (dua) {
-                speakText(dua.arabic, 'ar-SA', 0.78); // Slower for kids to grasp phonetics
+                speakText(dua.arabic, 'ar-SA', 0.78); 
             }
         }
 
@@ -772,14 +819,11 @@
             if (!state.activeDuaId) return;
             const dua = DUAS_DB.find(d => d.id === state.activeDuaId);
             if (dua) {
-                // Calls Gemini child-voice service directly!
                 speakThaiChildVoice(dua.thaiTranslation);
             }
         }
 
-        // Database structured around beautiful categorization (20 Duas)
         const DUAS_DB = [
-            // Category: routine (ยามเช้าและกลางคืน) - 6 items
             {
                 id: "dua_sleeping_before",
                 title: "ดุอาอ์ก่อนเข้านอน",
@@ -809,7 +853,7 @@
                 title: "ดุอาอ์ขณะสวมใส่เสื้อผ้า",
                 subtitle: "ขอบคุณสิ่งทอที่สวมใส่ปกปิดร่างกายและมอบความงดงาม",
                 category: "routine",
-                arabic: "الْحَمْدُ لِلَّهِ الَّذِي كَسَانِي هَذَا الثَّوْبَ وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",
+                arabic: "الْحَمْدُ لِلَّهِ الَّذِي كَسَانِي هَذَا الثَّوْบَ وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",
                 thaiTrans: "อัลฮัมดู ลิลลาฮิลละซี กะซานี ฮาซัษเษาว์บะ วะเราะซะเกาะนีฮิ มินฆ็อยริ เฮาลิน มินนี วะลา กุววะฮ์",
                 thaiTranslation: "การสรรเสริญทั้งมวลเป็นสิทธิ์ของอัลลอฮ์ ผู้ทรงให้ฉันสวมใส่เสื้อผ้านี้ และประทานมันให้ฉัน โดยไม่ได้เกิดจากความรอบรู้หรือกำลังความสามารถของฉันเองเลย",
                 evidence: "หะดีษศอฮีห์ บันทึกโดย อะบูดาวุด (เลขที่ 4023) และ อัต-ติรมิซีย์ (เลขที่ 3458) ท่านนบีรับประกันว่าผู้สวมใส่ผ้าแล้วกล่าวดุอาอ์นี้จะได้รับการอภัยในบาปที่ผ่านมา",
@@ -821,7 +865,7 @@
                 title: "ดุอาอ์เมื่อฝนตก",
                 subtitle: "วิงวอนขอให้ฝนนี้เป็นน้ำฝนอันจำเริญที่ให้คุณประโยชน์แก่พืชพรรณและผู้คน",
                 category: "routine",
-                arabic: "اللَّهُمَّ صَيِّبًا نَافِعًا",
+                arabic: "اللَّهُمَّ صَيِّبًا นَافِعًا",
                 thaiTrans: "อัลลอฮุมมะ ศ็อยยิบัน นาฟิอัน",
                 thaiTranslation: "โอ้อัลลอฮ์ โปรดประทานฝนที่หลั่งไหลลงมาอย่างนำพาคุณประโยชน์แก่เราด้วยเถิด",
                 evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 1032) รายงานโดยท่านหญิงอาอิชะฮ์ ร่อฎิยัลลอฮุอันฮา เมื่อเห็นเม็ดฝนตกลงมาจากฟากฟ้าท่านนบีมักจะขอดุอาอ์บทนี้เสมอเพื่อความเป็นสิริมงคล",
@@ -852,8 +896,6 @@
                 icon: "fa-socks",
                 colorClass: "from-pink-50/50 to-pink-100 hover:shadow-pink-100 border-pink-200"
             },
-
-            // Category: food (กินดื่มและร่างกาย) - 4 items
             {
                 id: "dua_eating_before",
                 title: "ดุอาอ์ก่อนรับประทานอาหาร",
@@ -871,7 +913,7 @@
                 title: "ดุอาอ์หลังอิ่มอาหาร",
                 subtitle: "ขอบพระคุณอัลลอฮ์ที่ประทานอาหารและริซกีอันแสนประเสริฐแก่เรา",
                 category: "food",
-                arabic: "الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْลٍ مِنِّي وَلَا قُوَّةٍ",
+                arabic: "الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",
                 thaiTrans: "อัลฮัมดุ ลิลลาฮิลละซี อัฏอะมะนี ฮาซา วะเราะซะเกาะนีฮิ มิน ฆ็อยริ เฮาลิน มินนี วะลา กุววะฮ์",
                 thaiTranslation: "การสรรเสริญทั้งมวลเป็นสิทธิ์ของอัลลอฮ์ ผู้ทรงให้อาหารนี้แก่ฉัน และทรงประทานมันเป็นริซกีแก่ฉัน โดยปราศจากกำลังและความสามารถใดๆ จากตัวฉันเองเลย",
                 evidence: "หะดีษหะซัน บันทึกโดย อบู ดาวุด (เลขที่ 4023) และอัต-ติรมิซีย์ (เลขที่ 3458) ท่านนบีกล่าวว่า ผู้ใดที่กล่าวบทนี้หลังรับประทานอาหารเสร็จ อัลลอฮ์จะทรงอภัยโทษในบาปกรรมที่ผ่านมาของเขา",
@@ -902,8 +944,6 @@
                 icon: "fa-glass-water",
                 colorClass: "from-cyan-50/50 to-slate-100 hover:shadow-slate-100 border-slate-200"
             },
-
-            // Category: family (ครอบครัวและมารยาท) - 4 items
             {
                 id: "dua_parents",
                 title: "ดุอาอ์ขอพรแด่คุณพ่อคุณแม่",
@@ -937,7 +977,7 @@
                 thaiTrans: "อัลฮัมดุลิลลาฮ์ (คนจามกล่าว) - ยัรฮะมุกัลลอฮ์ (คนฟังกล่าวตอบ)",
                 thaiTranslation: "มวลการสรรเสริญเป็นสิทธิ์ของอัลลอฮ์ - ขออัลลอฮ์ทรงประทานความเมตตาแก่ท่าน",
                 evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 6224) ท่านนบีสอนว่า เมื่อมีคนจามแล้วกล่าว อัลฮัมดุลิลลาฮ์ ให้ผู้ได้ยินกล่าวตอบรับ ยัรฮะมุกัลลอฮ์ เพื่อกระชับสายสัมพันธ์ความเมตตาแก่กัน",
-                icon: "fa-face-smirk",
+                icon: "fa-face-smile",
                 colorClass: "from-lime-50/50 to-lime-100 hover:shadow-lime-100 border-lime-200"
             },
             {
@@ -952,8 +992,6 @@
                 icon: "fa-wand-magic-sparkles",
                 colorClass: "from-violet-50/50 to-violet-100 hover:shadow-violet-100 border-violet-200"
             },
-
-            // Category: knowledge (ความรู้และการคุ้มครอง) - 6 items
             {
                 id: "dua_knowledge",
                 title: "ดุอาอ์ขอเพิ่มพูนความรู้",
@@ -971,7 +1009,7 @@
                 title: "ดุอาอ์ขณะออกจากประตูบ้าน",
                 subtitle: "เมื่อต้องเดินทางไปข้างนอก มอบหมายความปลอดภัยทั้งหมดแด่อัลลอฮ์",
                 category: "knowledge",
-                arabic: "بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّา بِاللَّهِ",
+                arabic: "بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
                 thaiTrans: "บิสมิลลาฮิ ตะวักกัลตุ อะลัลลอฮ์ วะลาเฮาละ วะลากุววะตะ อิลลา บิลลาฮ์",
                 thaiTranslation: "ด้วยพระนามของอัลลอฮ์ ฉันขอมอบหมายชีวิตต่อพระองค์ และไม่มีกำลังหรืออำนาจใดๆ เกิดขึ้น เว้นแต่มันมาจากอัลลอฮ์",
                 evidence: "หะดีษศอฮีห์ บันทึกโดย อะบูดาวุด (เลขที่ 5095) มะลาอิกะฮ์จะกล่าวพิทักษ์แก่ผู้ที่สวดคำนี้ในขณะที่เขาก้าวออกจากบ้านว่า: 'เจ้าได้รับการปกป้องดูแลแล้ว'",
@@ -1010,7 +1048,7 @@
                 arabic: "اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",
                 thaiTrans: "อัลลอฮุมมัฟตะห์ ลี อับวาบะ เราะห์มะติก",
                 thaiTranslation: "โอ้อัลลอฮ์ โปรดเปิดประตูแห่งความเมตตาอันพรั่งพรูของพระองค์ท่านให้แก่ฉันด้วยเถิด",
-                evidence: "หะดีษศอฮีห์ บันทึกโดย มุสลิม (เลขที่ 713) ท่านนบีเน้นย้ำให้เยาวชนกล่าวคำนี้ขณะก้าวเท้าขวาสู่มัสยิดเพื่อสะสมความสุขและจริยวัตรที่ดีงามในสถานศักดิ์สิทธิ์",
+                evidence: "หะดีษศอฮีห์ บันทึกโดย มุสลิม (เลขที่ 713) ท่านนบีเน้นย้ำให้กล่าวคำนี้ขณะก้าวเท้าขวาสู่มัสยิดเพื่อสะสมความสุขและจริยวัตรที่ดีงามในสถานศักดิ์สิทธิ์",
                 icon: "fa-mosque",
                 colorClass: "from-emerald-50/50 to-teal-100 hover:shadow-teal-100 border-teal-200"
             },
@@ -1031,49 +1069,188 @@
         let state = {
             currentCategory: 'all',
             searchQuery: '',
-            memorizedDuas: [], // Saved IDs of duas memorized
+            memorizedDuas: [], 
             starsCount: 0,
             activeDuaId: null,
             activeModalTab: 'reading',
             repetitionTracker: { 1: false, 2: false, 3: false },
             currentAudio: null,
-            chosenMascot: { emoji: '⭐️', name: 'ดาราน้อย' }
+            chosenMascot: { emoji: '⭐️', name: 'ดาราน้อย' },
+            syncUserId: null
         };
 
-        function saveToLocalStorage() {
+        // Custom alerts instead of browser native alert()
+        function alertModal(message) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl z-50 text-xs font-bold animate-bounce";
+            toast.innerText = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        // --- CLOUD SYNC & LOCAL PERSISTENCE SYSTEM ---
+        async function saveProgressState() {
+            // Local fallback saving
             localStorage.setItem('dua_stars_count', state.starsCount);
             localStorage.setItem('dua_memorized_list', JSON.stringify(state.memorizedDuas));
             localStorage.setItem('dua_mascot', JSON.stringify(state.chosenMascot));
+
+            // Online database syncing
+            if (isOnline && authUser) {
+                const targetUid = state.syncUserId || authUser.uid;
+                const docRef = doc(db, 'artifacts', appId, 'users', targetUid, 'progress', 'current');
+                try {
+                    await setDoc(docRef, {
+                        starsCount: state.starsCount,
+                        memorizedDuas: state.memorizedDuas,
+                        chosenMascot: state.chosenMascot,
+                        lastUpdated: new Date().toISOString()
+                    }, { merge: true });
+                } catch (e) {
+                    console.error("Cloud saving sync failed:", e);
+                }
+            }
         }
 
         function loadFromLocalStorage() {
             const savedStars = localStorage.getItem('dua_stars_count');
             const savedDuas = localStorage.getItem('dua_memorized_list');
             const savedMascot = localStorage.getItem('dua_mascot');
+            const savedCustomSync = localStorage.getItem('dua_sync_user_id');
 
-            if (savedStars) {
-                state.starsCount = parseInt(savedStars, 10);
-            }
+            if (savedStars) state.starsCount = parseInt(savedStars, 10);
             if (savedDuas) {
-                try {
-                    state.memorizedDuas = JSON.parse(savedDuas);
-                } catch(e) {
-                    state.memorizedDuas = [];
-                }
+                try { state.memorizedDuas = JSON.parse(savedDuas); } catch (e) { state.memorizedDuas = []; }
             }
             if (savedMascot) {
-                try {
-                    state.chosenMascot = JSON.parse(savedMascot);
-                } catch(e) {
-                    state.chosenMascot = { emoji: '⭐️', name: 'ดาราน้อย' };
-                }
+                try { state.chosenMascot = JSON.parse(savedMascot); } catch (e) { state.chosenMascot = { emoji: '⭐️', name: 'ดาราน้อย' }; }
+            }
+            if (savedCustomSync) {
+                state.syncUserId = savedCustomSync;
             }
             
             applyMascotUI();
             updateDashboardUI();
         }
 
-        // Mascot Selection Functions
+        // Real-time listener for multi-device instant sync
+        function setupRealtimeSync(uid) {
+            if (unsubscribeSync) unsubscribeSync();
+            if (!isOnline) return;
+
+            const docRef = doc(db, 'artifacts', appId, 'users', uid, 'progress', 'current');
+            
+            unsubscribeSync = onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    state.starsCount = data.starsCount || 0;
+                    state.memorizedDuas = data.memorizedDuas || [];
+                    state.chosenMascot = data.chosenMascot || { emoji: '⭐️', name: 'ดาราน้อย' };
+                    
+                    applyMascotUI();
+                    updateDashboardUI();
+                    renderDuas();
+                } else {
+                    // Sync initial offline local data to newly online account
+                    saveProgressState();
+                }
+            }, (error) => {
+                console.warn("Real-time cloud database snapshot error:", error);
+            });
+
+            // Put active Sync code in UI
+            const syncDisplay = document.getElementById('sync-code-display');
+            if (syncDisplay) {
+                syncDisplay.value = uid;
+            }
+        }
+
+        // --- AUTHENTICATION INIT (RULE 3) ---
+        async function initOnlineSession() {
+            if (!isOnline) {
+                const syncDisplay = document.getElementById('sync-code-display');
+                if (syncDisplay) syncDisplay.value = "โหมดออฟไลน์ใช้งานบนเครื่องนี้เท่านั้น";
+                return;
+            }
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth custom token issue, fallback to anonymous:", err);
+                try {
+                    await signInAnonymously(auth);
+                } catch (e2) {
+                    console.error("Auth failed completely. Fallback to local mode.", e2);
+                }
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    authUser = user;
+                    const syncIdToUse = state.syncUserId || user.uid;
+                    setupRealtimeSync(syncIdToUse);
+                }
+            });
+        }
+
+        // Copy Sync Code securely without modern Navigator restriction issues
+        function copySyncCode() {
+            playSound('click');
+            const syncCodeVal = document.getElementById('sync-code-display').value;
+            if (!syncCodeVal || syncCodeVal.startsWith("กำลัง") || syncCodeVal.startsWith("โหมด")) {
+                alertModal("กรุณารอเชื่อมต่อออนไลน์สักครู่นะคะ...");
+                return;
+            }
+
+            const tempInput = document.createElement('input');
+            tempInput.value = syncCodeVal;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            alertModal("คัดลอกรหัสเซฟคลาวด์แล้ว นำไปวางในเครื่องใหม่ได้เลยครับ! 📋");
+        }
+
+        // Load sync data from other device code
+        async function loadCustomSyncCode() {
+            playSound('click');
+            const codeInput = document.getElementById('sync-code-input').value.trim();
+            if (!codeInput) {
+                alertModal("กรุณากรอกรหัสความก้าวหน้าก่อนนะคะ");
+                return;
+            }
+
+            if (!isOnline) {
+                alertModal("ระบบไม่ได้เชื่อมต่อออนไลน์ในขณะนี้");
+                return;
+            }
+
+            const docRef = doc(db, 'artifacts', appId, 'users', codeInput, 'progress', 'current');
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    state.syncUserId = codeInput;
+                    localStorage.setItem('dua_sync_user_id', codeInput);
+                    setupRealtimeSync(codeInput);
+                    playSound('success');
+                    triggerConfetti();
+                    closeSyncModal();
+                    alertModal("ดึงประวัติความสำเร็จจากคลาวด์เรียบร้อยแล้วครับ! 🌟");
+                } else {
+                    alertModal("ไม่พบรหัสคลาวด์นี้ กรุณาตรวจสอบความถูกต้องอีกครั้งนะคะ");
+                }
+            } catch (e) {
+                console.error("Fetch custom sync profile error:", e);
+                alertModal("เกิดปัญหาในการดึงข้อมูลจากระบบออนไลน์");
+            }
+        }
+
+        // --- UI & INTERACTION MAPPINGS ---
         function openAvatarSelector() {
             playSound('tick');
             const panel = document.getElementById('avatar-selector');
@@ -1088,7 +1265,7 @@
         function setAvatar(emoji, name) {
             playSound('success');
             state.chosenMascot = { emoji, name };
-            saveToLocalStorage();
+            saveProgressState();
             applyMascotUI();
             closeAvatarSelector();
             triggerConfetti();
@@ -1140,7 +1317,7 @@
                             
                             <!-- Star Badge indicator -->
                             <div class="flex items-center gap-1">
-                                <button onclick="event.stopPropagation(); playQuickArabicSpeech('${dua.arabic.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-50 text-indigo-600 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="ฟังเสียง">
+                                <button onclick="event.stopPropagation(); window.playQuickArabicSpeech('${dua.arabic.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-50 text-indigo-600 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="ฟังเสียง">
                                     <i class="fa-solid fa-volume-high text-xs"></i>
                                 </button>
                                 ${isMemorized ? `
@@ -1189,7 +1366,6 @@
             playSound('click');
             state.currentCategory = cat;
             
-            // Switch Active Tab Design Classes
             document.querySelectorAll('.category-pill').forEach(btn => {
                 btn.className = "category-pill whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-white text-slate-600 hover:text-slate-900 border-2 border-indigo-50 hover:border-indigo-100";
             });
@@ -1220,9 +1396,8 @@
             state.activeDuaId = id;
             state.repetitionTracker = { 1: false, 2: false, 3: false };
             updateRepetitionUI();
-            switchModalTab('reading'); // Default internal modal view
+            switchModalTab('reading'); 
 
-            // Populate text elements
             document.getElementById('modal-title').innerText = dua.title;
             document.getElementById('modal-subtitle').innerText = dua.subtitle;
             document.getElementById('modal-arabic').innerText = dua.arabic;
@@ -1230,16 +1405,13 @@
             document.getElementById('modal-translation').innerText = dua.thaiTranslation;
             document.getElementById('modal-evidence').innerText = dua.evidence;
 
-            // Voice wave resetting
             const wave = document.getElementById('voice-wave-container');
             if (wave) wave.classList.add('hidden');
 
-            // Category badge styling mapping
             const catBadge = document.getElementById('modal-category-badge');
             const catLabel = { routine: 'ยามเช้าและกลางคืน', food: 'กินดื่มและร่างกาย', family: 'ครอบครัว', knowledge: 'ความรู้และการคุ้มครอง' }[dua.category];
             catBadge.innerText = catLabel || 'ทั่วไป';
 
-            // Check if memorized
             const isAlreadyMemorized = state.memorizedDuas.includes(id);
             const memorizedBadge = document.getElementById('modal-memorized-badge');
             const actionBtn = document.getElementById('modal-action-btn');
@@ -1256,7 +1428,6 @@
                 actionBtn.className = "flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-white font-extrabold px-6 py-4 rounded-2xl shadow-md shadow-amber-100 flex items-center justify-center gap-2 transition-all text-base";
             }
 
-            // Reveal Animation
             const modal = document.getElementById('dua-modal');
             const modalContent = document.getElementById('modal-content');
             modal.classList.remove('hidden');
@@ -1265,7 +1436,6 @@
                 modalContent.classList.add('scale-100');
             }, 10);
 
-            // Auto-trigger clean speech with delay
             setTimeout(() => {
                 playArabicSpeechFromModal();
             }, 300);
@@ -1293,23 +1463,19 @@
             state.activeDuaId = null;
         }
 
-        // Inside Modal Tab switcher
         function switchModalTab(tabName) {
             playSound('tick');
             state.activeModalTab = tabName;
 
-            // Reset tab styles
             document.querySelectorAll('.modal-tab').forEach(tab => {
                 tab.classList.remove('active-modal-tab', 'text-indigo-600', 'border-b-2', 'border-indigo-600');
                 tab.classList.add('text-slate-400');
             });
 
-            // Set active
             const activeTab = document.getElementById(`modal-tab-${tabName}`);
             activeTab.classList.remove('text-slate-400');
             activeTab.classList.add('active-modal-tab', 'text-indigo-600', 'border-b-2', 'border-indigo-600');
 
-            // Switch block visibility
             if (tabName === 'reading') {
                 document.getElementById('modal-content-reading').classList.remove('hidden');
                 document.getElementById('modal-content-hadith').classList.add('hidden');
@@ -1324,7 +1490,6 @@
             state.repetitionTracker[step] = !state.repetitionTracker[step];
             updateRepetitionUI();
             
-            // If all 3 are completed, reward with a quick success chime
             if (state.repetitionTracker[1] && state.repetitionTracker[2] && state.repetitionTracker[3]) {
                 playSound('success');
                 triggerConfetti();
@@ -1348,22 +1513,19 @@
             const index = state.memorizedDuas.indexOf(duaId);
 
             if (index > -1) {
-                // Remove progress
                 state.memorizedDuas.splice(index, 1);
                 if (state.starsCount >= 5) state.starsCount -= 5;
                 playSound('tick');
             } else {
-                // Completed!
                 state.memorizedDuas.push(duaId);
                 state.starsCount += 5;
                 playSound('success');
                 triggerConfetti();
             }
 
-            saveToLocalStorage();
+            saveProgressState();
             updateDashboardUI();
             
-            // Re-open to refresh the status dynamically
             openDuaModal(duaId);
             renderDuas();
         }
@@ -1399,7 +1561,6 @@
             document.getElementById('reward-info-modal').classList.add('hidden');
         }
 
-        // Custom Confirmation Modals
         function showResetConfirmModal() {
             playSound('click');
             document.getElementById('reset-confirm-modal').classList.remove('hidden');
@@ -1414,28 +1575,70 @@
             playSound('success');
             state.memorizedDuas = [];
             state.starsCount = 0;
-            saveToLocalStorage();
+            state.syncUserId = null;
+            localStorage.removeItem('dua_sync_user_id');
+            saveProgressState();
             updateDashboardUI();
             renderDuas();
             closeResetConfirmModal();
+            if (isOnline && authUser) {
+                setupRealtimeSync(authUser.uid);
+            }
         }
 
-        // Close on backdrop touch/click
+        function openSyncModal() {
+            playSound('click');
+            document.getElementById('sync-modal').classList.remove('hidden');
+        }
+
+        function closeSyncModal() {
+            playSound('tick');
+            document.getElementById('sync-modal').classList.add('hidden');
+        }
+
+        // Window mapping to expose ES6 module functions to inline HTML attributes
+        window.changeCategory = changeCategory;
+        window.openAvatarSelector = openAvatarSelector;
+        window.closeAvatarSelector = closeAvatarSelector;
+        window.setAvatar = setAvatar;
+        window.filterDuas = filterDuas;
+        window.openDuaModal = openDuaModal;
+        window.closeModal = closeModal;
+        window.switchModalTab = switchModalTab;
+        window.toggleRepetitionStep = toggleRepetitionStep;
+        window.toggleMemorizedDuaFromModal = toggleMemorizedDuaFromModal;
+        window.showRewardInfo = showRewardInfo;
+        window.closeRewardInfo = closeRewardInfo;
+        window.showResetConfirmModal = showResetConfirmModal;
+        window.closeResetConfirmModal = closeResetConfirmModal;
+        window.confirmResetProgress = confirmResetProgress;
+        window.playQuickArabicSpeech = playQuickArabicSpeech;
+        window.playArabicSpeechFromModal = playArabicSpeechFromModal;
+        window.playThaiSpeechFromModal = playThaiSpeechFromModal;
+        window.openSyncModal = openSyncModal;
+        window.closeSyncModal = closeSyncModal;
+        window.copySyncCode = copySyncCode;
+        window.loadCustomSyncCode = loadCustomSyncCode;
+
+        // Close modals on background backdrop click
         window.onclick = function(event) {
             const modal = document.getElementById('dua-modal');
             const rewardModal = document.getElementById('reward-info-modal');
             const confirmModal = document.getElementById('reset-confirm-modal');
+            const syncModal = document.getElementById('sync-modal');
             
             if (event.target === modal) closeModal();
             if (event.target === rewardModal) closeRewardInfo();
             if (event.target === confirmModal) closeResetConfirmModal();
+            if (event.target === syncModal) closeSyncModal();
         };
 
+        // On Load initialization
         window.onload = function() {
             loadFromLocalStorage();
             renderDuas();
+            initOnlineSession();
             
-            // Pre-fetch Web Speech voices
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.getVoices();
                 if (window.speechSynthesis.onvoiceschanged !== undefined) {
@@ -1446,13 +1649,3 @@
     </script>
 </body>
 </html>
-```
-eof
-
-### ✨ รายละเอียดและการจัดสรรดุอาอ์ใหม่:
-* **หมวดหมู่ Routine (ยามเช้าและกลางคืน) เพิ่มเป็น 6 บท:** เพิ่มดุอาอ์ฝนตก, ฟ้าผ่า และการสวมใส่ชุดใหม่
-* **หมวดหมู่ Food (กินดื่มและร่างกาย) เพิ่มเป็น 4 บท:** เพิ่มดุอาอ์หลังดื่มนมซึ่งเปรียบเสมือนอาหารแห่งความจำเริญตามธรรมชาติ
-* **หมวดหมู่ Family (ครอบครัวและมารยาท) เพิ่มเป็น 4 บท:** เพิ่มมารยาทการจามและการกล่าวตอบสลามคนจาม และดุอาอ์กล่าวชมความสวยงาม (มาชาอัลลอฮ์) ป้องกันตาอิจฉา
-* **หมวดหมู่ Knowledge (ความรู้และการคุ้มครอง) เพิ่มเป็น 6 บท:** เพิ่มดุอาอ์ขึ้นพาหนะเดินทาง, ดุอาอ์ปัดความยากกังวลในการเรียนรู้, ดุอาอ์เข้ามัสยิด และดุอาอ์สากลปกป้องตัวจากความชั่วร้ายของสรรพสิ่งที่ถูกสร้าง
-
-คุณแม่และหนูน้อยสามารถเลือกสลับแท็บเพื่อตรวจสอบหมวดหมู่การเรียนรู้แบบเรียลไทม์ และเพลิดเพลินไปกับเสียงอ่านสัทอักษร สำเนียงอาหรับ ตลอดจนเสียงความหมายดุอาอ์ได้ทันทีบนปุ่ม `Preview` ได้เลยครับ! บารอกัลลอฮุฟีกุมครับ ✨
