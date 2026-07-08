@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ปลดล็อกการส่ง Referrer เพื่อแก้ปัญหาเสียงโดนบล็อกจากโฮสต์ภายนอก เช่น GitHub Pages -->
+    <meta name="referrer" content="no-referrer">
     <title>Dua Stars - ดุอาอ์ดวงดาราน้อยสำหรับคุณแม่และหนูน้อย</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -523,13 +525,20 @@
         }
 
         // Web Audio API Sound Synthesizer (Zero-dependency sound effects generator)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let audioCtx = null;
+        
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
         
         function playSound(type) {
             try {
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
+                initAudioContext();
                 
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -613,6 +622,9 @@
         // --- DUAL ENGINE (HYBRID) TEXT TO SPEECH ---
         function speakText(text, lang = 'ar-SA', speed = 0.85) {
             try {
+                // ปลุกระบบประมวลผลเสียงของเบราว์เซอร์
+                initAudioContext();
+                
                 if (state.currentAudio) {
                     state.currentAudio.pause();
                     state.currentAudio = null;
@@ -630,6 +642,7 @@
                 const isArabic = lang.startsWith('ar');
                 const cloudLang = isArabic ? 'ar' : 'th';
 
+                // ใช้ Google TTS โดยไม่มี Referrer ส่งผลให้อ่านได้เสถียรบน GitHub Pages
                 const cloudTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${cloudLang}&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
                 
                 const audioPlayer = new Audio();
@@ -649,12 +662,12 @@
                 };
 
                 audioPlayer.onerror = (e) => {
-                    console.warn("Cloud Speech failed, falling back to browser Native Speech API...", e);
+                    console.warn("Cloud Speech failed (Possibly CORS/Network), falling back to browser Native Speech API...", e);
                     playNativeSpeechFallback(cleanText, lang, speed);
                 };
 
                 audioPlayer.play().catch(err => {
-                    console.warn("Autoplay block, using native fallback...", err);
+                    console.warn("Autoplay block or network error, using native fallback...", err);
                     playNativeSpeechFallback(cleanText, lang, speed);
                 });
 
@@ -670,6 +683,8 @@
             const thaiBtn = document.getElementById('btn-speak-thai');
             const btnText = document.getElementById('thai-btn-text');
             const btnIcon = document.getElementById('thai-btn-icon');
+
+            initAudioContext();
 
             if (state.currentAudio) {
                 state.currentAudio.pause();
@@ -695,7 +710,7 @@
                         }]
                     }],
                     generationConfig: {
-                        responseModalities: ["AUDIO"],
+                        responseModalalities: ["AUDIO"],
                         speechConfig: {
                             voiceConfig: {
                                 prebuiltVoiceConfig: { voiceName: "Leda" } 
@@ -1638,6 +1653,14 @@
             loadFromLocalStorage();
             renderDuas();
             initOnlineSession();
+
+            // ปลุกระบบประมวลผลเสียงเมื่อมีการแตะหน้าจอครั้งแรก (ปลดล็อก iOS Autoplay)
+            const unlockInteractions = ['click', 'touchstart', 'mousedown'];
+            unlockInteractions.forEach(event => {
+                document.body.addEventListener(event, () => {
+                    initAudioContext();
+                }, { once: true });
+            });
             
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.getVoices();
