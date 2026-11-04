@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- ปลดล็อกการส่ง Referrer เพื่อแก้ปัญหาเสียงโดนบล็อกจากโฮสต์ภายนอก เช่น GitHub Pages -->
     <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="./manifest.webmanifest">
     <title>Dua Stars - ดุอาอ์ดวงดาราน้อยสำหรับคุณแม่และหนูน้อย</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -100,6 +102,9 @@
                 </button>
                 <button onclick="openProfilesModal()" id="profile-header-button" class="bg-pink-50 hover:bg-pink-100 border border-pink-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs text-pink-950 font-bold text-xs">
                     <span id="profile-header-emoji">👧</span> <span id="profile-header-name" class="hidden md:inline">โปรไฟล์</span>
+                </button>
+                <button onclick="installPWA()" id="install-app-button" class="hidden bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-2xl p-1.5 px-3 items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs text-amber-950 font-bold text-xs">
+                    <span>📲</span> <span class="hidden md:inline">ติดตั้งแอป</span>
                 </button>
                 
                 <!-- Avatar Select Trigger -->
@@ -3332,6 +3337,30 @@
         window.copyShareLink = copyShareLink;
         window.useNativeShare = useNativeShare;
 
+        let deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            const installButton = document.getElementById('install-app-button');
+            if (installButton) installButton.classList.remove('hidden');
+            if (installButton) installButton.classList.add('flex');
+        });
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            document.getElementById('install-app-button')?.classList.add('hidden');
+        });
+        async function installPWA() {
+            if (!deferredInstallPrompt) {
+                alertModal('หากไม่เห็นหน้าต่างติดตั้ง ให้ใช้เมนูของเบราว์เซอร์ แล้วเลือก “เพิ่มไปยังหน้าจอหลัก”');
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            document.getElementById('install-app-button')?.classList.add('hidden');
+        }
+        window.installPWA = installPWA;
+
         // Close modals on background backdrop click
         window.onclick = function(event) {
             const modal = document.getElementById('dua-modal');
@@ -3378,6 +3407,9 @@
                 if (window.speechSynthesis.onvoiceschanged !== undefined) {
                     window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
                 }
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').catch(error => console.warn('PWA service worker unavailable:', error));
             }
         };
     </script>
