@@ -21,7 +21,7 @@
         body {
             font-family: 'Prompt', sans-serif;
             background-color: #f8fafc;
-        }
+        <!-- } -->
         .kids-font {
             font-family: 'Short Stack', 'Prompt', sans-serif;
         }
@@ -2814,6 +2814,14 @@
         window.closeSyncModal = closeSyncModal;
         window.copySyncCode = copySyncCode;
         window.loadCustomSyncCode = loadCustomSyncCode;
+        window.openAuthModal = openAuthModal;
+        window.closeAuthModal = closeAuthModal;
+        window.switchAuthMode = switchAuthMode;
+        window.submitAuthForm = submitAuthForm;
+        window.resetAuthPassword = resetAuthPassword;
+        window.logoutAccount = logoutAccount;
+        window.toggleFavorite = toggleFavorite;
+        window.toggleFavoriteFromModal = toggleFavoriteFromModal;
 
         // Close modals on background backdrop click
         window.onclick = function(event) {
