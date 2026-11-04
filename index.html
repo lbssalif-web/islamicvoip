@@ -189,6 +189,9 @@
                             </div>
                         </div>
                     </div>
+                    <button onclick="openMissionsModal()" class="mt-4 inline-flex items-center gap-2 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-300/30 text-amber-100 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all">
+                        <span>🎯</span> ภารกิจวันนี้ <span id="hero-mission-progress" class="bg-white/15 px-2 py-0.5 rounded-full">0/3</span>
+                    </button>
                 </div>
 
                 <!-- Big Interactive Mascot Display on Right -->
@@ -449,6 +452,20 @@
                 <div id="dashboard-chart-labels" class="flex justify-between gap-2 mt-2"></div>
             </div>
             <p id="dashboard-activity-summary" class="text-center text-xs text-slate-500 mt-4"></p>
+            <div class="mt-5 border-t border-slate-100 pt-5">
+                <div class="flex items-center justify-between mb-3"><h4 class="text-sm font-extrabold text-slate-700">เหรียญตราความสำเร็จ</h4><button onclick="openMissionsModal()" class="text-xs font-bold text-purple-600">ดูภารกิจวันนี้</button></div>
+                <div id="dashboard-badges" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Missions and Badges Modal -->
+    <div id="missions-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all">
+        <div class="bg-white rounded-[32px] w-full max-w-lg max-h-[92vh] overflow-y-auto p-6 border border-amber-100 shadow-2xl relative">
+            <button onclick="closeMissionsModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center mb-5"><div class="w-16 h-16 mx-auto rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-3xl mb-3">🎯</div><h3 class="text-xl font-extrabold text-slate-800">ภารกิจประจำวัน</h3><p id="missions-date" class="text-xs text-slate-500 mt-1"></p></div>
+            <div id="missions-list" class="flex flex-col gap-3"></div>
+            <div class="mt-6 border-t border-slate-100 pt-5"><h4 class="text-sm font-extrabold text-slate-700 mb-3">เหรียญตราที่ปลดล็อกแล้ว</h4><div id="missions-badges" class="grid grid-cols-2 gap-2"></div></div>
         </div>
     </div>
 
@@ -2146,7 +2163,8 @@
             chosenMascot: { emoji: '⭐️', name: 'ดาราน้อย' },
             syncUserId: null,
             dashboardPeriod: 'weekly',
-            shareDuaId: null
+            shareDuaId: null,
+            claimedMissions: {}
         };
 
         // Custom alerts instead of browser native alert()
@@ -2165,6 +2183,7 @@
             localStorage.setItem('dua_memorized_list', JSON.stringify(state.memorizedDuas));
             localStorage.setItem('dua_favorite_list', JSON.stringify(state.favoriteDuas));
             localStorage.setItem('dua_activity_log', JSON.stringify(state.activityLog));
+            localStorage.setItem('dua_claimed_missions', JSON.stringify(state.claimedMissions));
             localStorage.setItem('dua_mascot', JSON.stringify(state.chosenMascot));
 
             // Online database syncing
@@ -2177,6 +2196,7 @@
                         memorizedDuas: state.memorizedDuas,
                         favoriteDuas: state.favoriteDuas,
                         activityLog: state.activityLog,
+                        claimedMissions: state.claimedMissions,
                         chosenMascot: state.chosenMascot,
                         lastUpdated: new Date().toISOString()
                     }, { merge: true });
@@ -2191,6 +2211,7 @@
             const savedDuas = localStorage.getItem('dua_memorized_list');
             const savedFavorites = localStorage.getItem('dua_favorite_list');
             const savedActivity = localStorage.getItem('dua_activity_log');
+            const savedClaimedMissions = localStorage.getItem('dua_claimed_missions');
             const savedMascot = localStorage.getItem('dua_mascot');
             const savedCustomSync = localStorage.getItem('dua_sync_user_id');
 
@@ -2203,6 +2224,9 @@
             }
             if (savedActivity) {
                 try { state.activityLog = JSON.parse(savedActivity); } catch (e) { state.activityLog = {}; }
+            }
+            if (savedClaimedMissions) {
+                try { state.claimedMissions = JSON.parse(savedClaimedMissions); } catch (e) { state.claimedMissions = {}; }
             }
             if (savedMascot) {
                 try { state.chosenMascot = JSON.parse(savedMascot); } catch (e) { state.chosenMascot = { emoji: '⭐️', name: 'ดาราน้อย' }; }
@@ -2229,6 +2253,7 @@
                     state.memorizedDuas = data.memorizedDuas || [];
                     state.favoriteDuas = data.favoriteDuas || [];
                     state.activityLog = data.activityLog || state.activityLog || {};
+                    state.claimedMissions = data.claimedMissions || state.claimedMissions || {};
                     state.chosenMascot = data.chosenMascot || { emoji: '⭐️', name: 'ดาราน้อย' };
                     
                     applyMascotUI();
@@ -2514,6 +2539,83 @@
             return `${date.getDate()}/${date.getMonth() + 1}`;
         }
 
+        function getTodayActivity() {
+            return state.activityLog[localDateKey()] || {};
+        }
+
+        function getBadgeDefinitions() {
+            const activeDays = Object.values(state.activityLog).filter(entry => activityTotal(entry) > 0).length;
+            return [
+                { id: 'first-star', icon: '⭐', title: 'ดาวดวงแรก', text: 'สะสมดาวแรก', earned: state.starsCount >= 5 },
+                { id: 'ten-duas', icon: '🏆', title: 'นักท่องจำ', text: 'จำได้ 10 บท', earned: state.memorizedDuas.length >= 10 },
+                { id: 'three-days', icon: '🔥', title: 'ขยันต่อเนื่อง', text: 'ใช้งาน 3 วัน', earned: activeDays >= 3 },
+                { id: 'first-favorite', icon: '💖', title: 'บทโปรด', text: 'เพิ่ม Favorites แรก', earned: state.favoriteDuas.length >= 1 },
+                { id: 'five-stars', icon: '🌟', title: 'นักสะสมดาว', text: 'สะสม 50 ดาว', earned: state.starsCount >= 50 },
+                { id: 'twenty-duas', icon: '🎓', title: 'นักเรียนเก่ง', text: 'จำได้ 20 บท', earned: state.memorizedDuas.length >= 20 },
+                { id: 'ten-days', icon: '🛡️', title: 'เกราะแห่งความดี', text: 'ใช้งาน 10 วัน', earned: activeDays >= 10 },
+                { id: 'all-duas', icon: '👑', title: 'ดาวเด่น Dua Stars', text: 'จำได้ครบทุกบท', earned: state.memorizedDuas.length >= DUAS_DB.length }
+            ];
+        }
+
+        function getDailyMissions() {
+            const today = getTodayActivity();
+            return [
+                { id: 'open-two', icon: '📖', title: 'เปิดเรียนรู้ 2 บท', current: Math.min(today.opens || 0, 2), target: 2, reward: 3 },
+                { id: 'memorize-one', icon: '⭐', title: 'จำดุอาอ์ใหม่ 1 บท', current: Math.min(today.memorized || 0, 1), target: 1, reward: 5 },
+                { id: 'favorite-one', icon: '💖', title: 'เพิ่มดุอาอ์โปรด 1 บท', current: Math.min(today.favorites || 0, 1), target: 1, reward: 2 }
+            ];
+        }
+
+        function renderBadges(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = getBadgeDefinitions().map(badge => `<div class="rounded-2xl border p-3 ${badge.earned ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100 opacity-45'}"><div class="text-2xl">${badge.icon}</div><p class="text-xs font-extrabold text-slate-700 mt-1">${badge.title}</p><p class="text-[10px] text-slate-400 mt-0.5">${badge.text}</p></div>`).join('');
+        }
+
+        function openMissionsModal() {
+            playSound('click');
+            renderMissions();
+            document.getElementById('missions-modal').classList.remove('hidden');
+        }
+
+        function closeMissionsModal() {
+            playSound('tick');
+            document.getElementById('missions-modal').classList.add('hidden');
+        }
+
+        function claimDailyMission(id) {
+            const key = `${localDateKey()}-${id}`;
+            const mission = getDailyMissions().find(item => item.id === id);
+            if (!mission || mission.current < mission.target || state.claimedMissions[key]) return;
+            state.claimedMissions[key] = true;
+            state.starsCount += mission.reward;
+            saveProgressState();
+            updateDashboardUI();
+            renderMissions();
+            renderBadges('dashboard-badges');
+            playSound('success');
+            triggerConfetti();
+            alertModal(`รับ ${mission.reward} ดาวจากภารกิจแล้ว! 🌟`);
+        }
+
+        function renderMissions() {
+            const missions = getDailyMissions();
+            document.getElementById('missions-date').innerText = `ภารกิจของวันที่ ${new Date().toLocaleDateString('th-TH', { dateStyle: 'long' })}`;
+            const completed = missions.filter(m => m.current >= m.target).length;
+            const heroProgress = document.getElementById('hero-mission-progress');
+            if (heroProgress) heroProgress.innerText = `${completed}/3`;
+            const list = document.getElementById('missions-list');
+            list.innerHTML = missions.map(m => {
+                const key = `${localDateKey()}-${m.id}`;
+                const done = m.current >= m.target;
+                const claimed = Boolean(state.claimedMissions[key]);
+                const percent = Math.round((m.current / m.target) * 100);
+                return `<div class="rounded-2xl border ${done ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-slate-50'} p-4"><div class="flex items-center gap-3"><span class="text-2xl">${m.icon}</span><div class="flex-1"><p class="text-sm font-extrabold text-slate-700">${m.title}</p><div class="h-2 bg-white rounded-full overflow-hidden mt-2"><div class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full" style="width:${percent}%"></div></div><p class="text-[10px] text-slate-400 mt-1">${m.current}/${m.target} • รับ ${m.reward} ดาว</p></div><button onclick="claimDailyMission('${m.id}')" class="text-[10px] font-extrabold px-3 py-2 rounded-xl ${done && !claimed ? 'bg-amber-400 text-white' : 'bg-white text-slate-400'}" ${!done || claimed ? 'disabled' : ''}>${claimed ? 'รับแล้ว' : done ? 'รับดาว' : 'ยังไม่ครบ'}</button></div></div>`;
+            }).join('');
+            renderBadges('missions-badges');
+            renderBadges('dashboard-badges');
+        }
+
         function openDashboardModal() {
             playSound('click');
             renderDashboard();
@@ -2562,6 +2664,8 @@
             document.getElementById('dashboard-chart-title').innerText = period === 'weekly' ? 'กิจกรรม 7 วันล่าสุด' : 'กิจกรรม 4 สัปดาห์ล่าสุด';
             document.getElementById('dashboard-active-days').innerText = `ใช้งาน ${activeDays} วัน`;
             document.getElementById('dashboard-activity-summary').innerText = `รวมกิจกรรม ${days.reduce((sum, d) => sum + d.value, 0)} ครั้งในช่วงที่เลือก • เก็บข้อมูลไว้กับบัญชีของคุณ`;
+            renderBadges('dashboard-badges');
+            renderMissions();
         }
 
         function openShareModal(id) {
@@ -3001,6 +3105,9 @@
         window.toggleFavoriteFromModal = toggleFavoriteFromModal;
         window.openDashboardModal = openDashboardModal;
         window.closeDashboardModal = closeDashboardModal;
+        window.openMissionsModal = openMissionsModal;
+        window.closeMissionsModal = closeMissionsModal;
+        window.claimDailyMission = claimDailyMission;
         window.changeDashboardPeriod = changeDashboardPeriod;
         window.openShareModal = openShareModal;
         window.closeShareModal = closeShareModal;
@@ -3015,6 +3122,7 @@
             const syncModal = document.getElementById('sync-modal');
             const dashboardModal = document.getElementById('dashboard-modal');
             const shareModal = document.getElementById('share-modal');
+            const missionsModal = document.getElementById('missions-modal');
             
             if (event.target === modal) closeModal();
             if (event.target === rewardModal) closeRewardInfo();
@@ -3022,6 +3130,7 @@
             if (event.target === syncModal) closeSyncModal();
             if (event.target === dashboardModal) closeDashboardModal();
             if (event.target === shareModal) closeShareModal();
+            if (event.target === missionsModal) closeMissionsModal();
         };
 
         // On Load initialization
