@@ -192,6 +192,9 @@
                     <button onclick="openMissionsModal()" class="mt-4 inline-flex items-center gap-2 bg-amber-400/15 hover:bg-amber-400/25 border border-amber-300/30 text-amber-100 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all">
                         <span>🎯</span> ภารกิจวันนี้ <span id="hero-mission-progress" class="bg-white/15 px-2 py-0.5 rounded-full">0/3</span>
                     </button>
+                    <button onclick="openQuizModal()" class="mt-4 inline-flex items-center gap-2 bg-pink-400/15 hover:bg-pink-400/25 border border-pink-300/30 text-pink-100 px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all">
+                        <span>🧠</span> เล่น Quiz
+                    </button>
                 </div>
 
                 <!-- Big Interactive Mascot Display on Right -->
@@ -456,6 +459,17 @@
                 <div class="flex items-center justify-between mb-3"><h4 class="text-sm font-extrabold text-slate-700">เหรียญตราความสำเร็จ</h4><button onclick="openMissionsModal()" class="text-xs font-bold text-purple-600">ดูภารกิจวันนี้</button></div>
                 <div id="dashboard-badges" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- Dua Quiz Modal -->
+    <div id="quiz-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all">
+        <div class="bg-white rounded-[32px] w-full max-w-xl max-h-[92vh] overflow-y-auto p-6 border border-pink-100 shadow-2xl relative">
+            <button onclick="closeQuizModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center mb-5"><div class="w-16 h-16 mx-auto rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center text-3xl mb-3">🧠</div><h3 class="text-xl font-extrabold text-slate-800">เกมทบทวนดุอาอ์</h3><p id="quiz-subtitle" class="text-xs text-slate-500 mt-1">ตอบคำถามให้ครบ 5 ข้อ เพื่อรับดาวพิเศษ</p></div>
+            <div id="quiz-start-panel" class="text-center py-5"><p class="text-sm text-slate-600 leading-relaxed">ทดสอบความจำจากดุอาอ์ 100 บท เลือกคำแปลที่ตรงกับตัวบทอาหรับที่สุด</p><button onclick="startQuiz()" class="mt-5 px-6 py-3.5 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-extrabold text-sm shadow-md">เริ่มเล่น Quiz</button></div>
+            <div id="quiz-game-panel" class="hidden"><div class="flex items-center justify-between text-xs font-bold text-slate-400 mb-3"><span id="quiz-question-count">ข้อ 1/5</span><span id="quiz-score">คะแนน 0</span></div><div class="h-2 bg-slate-100 rounded-full overflow-hidden mb-5"><div id="quiz-progress" class="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full" style="width:20%"></div></div><div class="rounded-3xl bg-indigo-50 border border-indigo-100 p-5 mb-4"><p class="text-xs text-indigo-500 font-bold mb-3">ดุอาอ์บทใดมีความหมายดังนี้?</p><p id="quiz-prompt" class="text-base font-extrabold text-slate-800 leading-relaxed"></p><p id="quiz-arabic" dir="rtl" class="arabic-font text-xl text-indigo-900 text-right mt-4 leading-loose"></p></div><div id="quiz-options" class="grid gap-3"></div><p id="quiz-feedback" class="text-center text-sm font-extrabold mt-4 min-h-5"></p><button id="quiz-next-button" onclick="nextQuizQuestion()" class="hidden w-full mt-3 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm">ข้อต่อไป</button></div>
+            <div id="quiz-result-panel" class="hidden text-center py-5"><div id="quiz-result-icon" class="text-6xl mb-3">🌟</div><h4 id="quiz-result-title" class="text-xl font-extrabold text-slate-800"></h4><p id="quiz-result-text" class="text-sm text-slate-500 mt-2"></p><button onclick="startQuiz()" class="mt-5 px-6 py-3 rounded-2xl bg-pink-600 hover:bg-pink-700 text-white font-extrabold text-sm">เล่นอีกครั้ง</button></div>
         </div>
     </div>
 
@@ -2164,7 +2178,9 @@
             syncUserId: null,
             dashboardPeriod: 'weekly',
             shareDuaId: null,
-            claimedMissions: {}
+            claimedMissions: {},
+            quizStats: { played: 0, best: 0 },
+            quizSession: null
         };
 
         // Custom alerts instead of browser native alert()
@@ -2184,6 +2200,7 @@
             localStorage.setItem('dua_favorite_list', JSON.stringify(state.favoriteDuas));
             localStorage.setItem('dua_activity_log', JSON.stringify(state.activityLog));
             localStorage.setItem('dua_claimed_missions', JSON.stringify(state.claimedMissions));
+            localStorage.setItem('dua_quiz_stats', JSON.stringify(state.quizStats));
             localStorage.setItem('dua_mascot', JSON.stringify(state.chosenMascot));
 
             // Online database syncing
@@ -2197,6 +2214,7 @@
                         favoriteDuas: state.favoriteDuas,
                         activityLog: state.activityLog,
                         claimedMissions: state.claimedMissions,
+                        quizStats: state.quizStats,
                         chosenMascot: state.chosenMascot,
                         lastUpdated: new Date().toISOString()
                     }, { merge: true });
@@ -2212,6 +2230,7 @@
             const savedFavorites = localStorage.getItem('dua_favorite_list');
             const savedActivity = localStorage.getItem('dua_activity_log');
             const savedClaimedMissions = localStorage.getItem('dua_claimed_missions');
+            const savedQuizStats = localStorage.getItem('dua_quiz_stats');
             const savedMascot = localStorage.getItem('dua_mascot');
             const savedCustomSync = localStorage.getItem('dua_sync_user_id');
 
@@ -2227,6 +2246,9 @@
             }
             if (savedClaimedMissions) {
                 try { state.claimedMissions = JSON.parse(savedClaimedMissions); } catch (e) { state.claimedMissions = {}; }
+            }
+            if (savedQuizStats) {
+                try { state.quizStats = JSON.parse(savedQuizStats); } catch (e) { state.quizStats = { played: 0, best: 0 }; }
             }
             if (savedMascot) {
                 try { state.chosenMascot = JSON.parse(savedMascot); } catch (e) { state.chosenMascot = { emoji: '⭐️', name: 'ดาราน้อย' }; }
@@ -2254,6 +2276,7 @@
                     state.favoriteDuas = data.favoriteDuas || [];
                     state.activityLog = data.activityLog || state.activityLog || {};
                     state.claimedMissions = data.claimedMissions || state.claimedMissions || {};
+                    state.quizStats = data.quizStats || state.quizStats || { played: 0, best: 0 };
                     state.chosenMascot = data.chosenMascot || { emoji: '⭐️', name: 'ดาราน้อย' };
                     
                     applyMascotUI();
@@ -2614,6 +2637,87 @@
             }).join('');
             renderBadges('missions-badges');
             renderBadges('dashboard-badges');
+        }
+
+        function shuffleArray(items) {
+            return [...items].sort(() => Math.random() - 0.5);
+        }
+
+        function openQuizModal() {
+            playSound('click');
+            document.getElementById('quiz-modal').classList.remove('hidden');
+            document.getElementById('quiz-start-panel').classList.remove('hidden');
+            document.getElementById('quiz-game-panel').classList.add('hidden');
+            document.getElementById('quiz-result-panel').classList.add('hidden');
+        }
+
+        function closeQuizModal() {
+            playSound('tick');
+            document.getElementById('quiz-modal').classList.add('hidden');
+        }
+
+        function startQuiz() {
+            const pool = shuffleArray(DUAS_DB).slice(0, 5);
+            state.quizSession = { questions: pool, index: 0, score: 0, answered: false };
+            document.getElementById('quiz-start-panel').classList.add('hidden');
+            document.getElementById('quiz-result-panel').classList.add('hidden');
+            document.getElementById('quiz-game-panel').classList.remove('hidden');
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const session = state.quizSession;
+            const dua = session.questions[session.index];
+            const options = shuffleArray([dua, ...shuffleArray(DUAS_DB.filter(item => item.id !== dua.id)).slice(0, 3)]);
+            session.currentOptions = options;
+            session.answered = false;
+            document.getElementById('quiz-question-count').innerText = `ข้อ ${session.index + 1}/5`;
+            document.getElementById('quiz-score').innerText = `คะแนน ${session.score}`;
+            document.getElementById('quiz-progress').style.width = `${((session.index + 1) / 5) * 100}%`;
+            document.getElementById('quiz-prompt').innerText = dua.thaiTranslation;
+            document.getElementById('quiz-arabic').innerText = dua.arabic;
+            document.getElementById('quiz-feedback').innerText = '';
+            document.getElementById('quiz-next-button').classList.add('hidden');
+            document.getElementById('quiz-options').innerHTML = options.map((option, index) => `<button onclick="answerQuiz(${index})" class="quiz-option w-full text-left p-4 rounded-2xl border-2 border-slate-100 hover:border-pink-300 hover:bg-pink-50 text-sm font-bold text-slate-700 transition-all">${String.fromCharCode(65 + index)}. ${option.title}</button>`).join('');
+        }
+
+        function answerQuiz(optionIndex) {
+            const session = state.quizSession;
+            if (!session || session.answered) return;
+            session.answered = true;
+            const correct = session.currentOptions[optionIndex].id === session.questions[session.index].id;
+            if (correct) session.score++;
+            document.querySelectorAll('.quiz-option').forEach((button, index) => {
+                button.disabled = true;
+                if (session.currentOptions[index].id === session.questions[session.index].id) button.classList.add('border-emerald-400', 'bg-emerald-50', 'text-emerald-700');
+                else if (index === optionIndex) button.classList.add('border-rose-300', 'bg-rose-50', 'text-rose-700');
+            });
+            document.getElementById('quiz-feedback').innerText = correct ? 'ถูกต้องมาก! 🌟' : `ยังไม่ใช่ คำตอบคือ “${session.questions[session.index].title}”`;
+            document.getElementById('quiz-feedback').className = `text-center text-sm font-extrabold mt-4 min-h-5 ${correct ? 'text-emerald-600' : 'text-rose-500'}`;
+            document.getElementById('quiz-next-button').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            const session = state.quizSession;
+            if (!session) return;
+            if (session.index < 4) { session.index++; renderQuizQuestion(); }
+            else finishQuiz();
+        }
+
+        function finishQuiz() {
+            const session = state.quizSession;
+            state.quizStats.played++;
+            state.quizStats.best = Math.max(state.quizStats.best || 0, session.score);
+            const reward = session.score >= 4 ? 5 : session.score >= 2 ? 2 : 0;
+            if (reward) state.starsCount += reward;
+            saveProgressState();
+            updateDashboardUI();
+            document.getElementById('quiz-game-panel').classList.add('hidden');
+            document.getElementById('quiz-result-panel').classList.remove('hidden');
+            document.getElementById('quiz-result-icon').innerText = session.score >= 4 ? '🏆' : session.score >= 2 ? '🌟' : '💪';
+            document.getElementById('quiz-result-title').innerText = `ได้ ${session.score}/5 คะแนน`;
+            document.getElementById('quiz-result-text').innerText = reward ? `รับดาวพิเศษ ${reward} ดวงแล้ว ฝึกต่อไปได้เก่งแน่นอน!` : 'ลองเล่นอีกครั้งเพื่อรับดาวพิเศษนะครับ';
+            if (reward) { playSound('success'); triggerConfetti(); }
         }
 
         function openDashboardModal() {
@@ -3107,6 +3211,11 @@
         window.closeDashboardModal = closeDashboardModal;
         window.openMissionsModal = openMissionsModal;
         window.closeMissionsModal = closeMissionsModal;
+        window.openQuizModal = openQuizModal;
+        window.closeQuizModal = closeQuizModal;
+        window.startQuiz = startQuiz;
+        window.answerQuiz = answerQuiz;
+        window.nextQuizQuestion = nextQuizQuestion;
         window.claimDailyMission = claimDailyMission;
         window.changeDashboardPeriod = changeDashboardPeriod;
         window.openShareModal = openShareModal;
@@ -3123,6 +3232,7 @@
             const dashboardModal = document.getElementById('dashboard-modal');
             const shareModal = document.getElementById('share-modal');
             const missionsModal = document.getElementById('missions-modal');
+            const quizModal = document.getElementById('quiz-modal');
             
             if (event.target === modal) closeModal();
             if (event.target === rewardModal) closeRewardInfo();
@@ -3131,6 +3241,7 @@
             if (event.target === dashboardModal) closeDashboardModal();
             if (event.target === shareModal) closeShareModal();
             if (event.target === missionsModal) closeMissionsModal();
+            if (event.target === quizModal) closeQuizModal();
         };
 
         // On Load initialization
