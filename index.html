@@ -92,6 +92,9 @@
                 <button onclick="openSyncModal()" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs text-indigo-950 font-bold text-xs">
                     <span>☁️</span> <span class="hidden md:inline">คลาวด์ซิงก์</span>
                 </button>
+                <button onclick="openAuthModal()" id="auth-header-button" class="bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs text-emerald-950 font-bold text-xs">
+                    <span>🔐</span> <span id="auth-header-label" class="hidden md:inline">เข้าสู่ระบบ</span>
+                </button>
                 
                 <!-- Avatar Select Trigger -->
                 <div onclick="openAvatarSelector()" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-2xl p-1.5 px-3 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-2xs">
@@ -228,6 +231,10 @@
                     <span class="text-base">📚</span>
                     <span>ความรู้และการคุ้มครอง (<span id="badge-knowledge">6</span>)</span>
                 </button>
+                <button onclick="changeCategory('favorites')" id="tab-favorites" class="category-pill whitespace-nowrap px-5 py-3.5 rounded-2xl flex items-center gap-2.5 transition-all text-sm font-extrabold shadow-sm bg-white text-slate-600 hover:text-slate-900 border-2 border-indigo-50 hover:border-indigo-100">
+                    <span class="text-base">❤️</span>
+                    <span>รายการโปรด (<span id="badge-favorites">0</span>)</span>
+                </button>
             </div>
         </section>
 
@@ -273,9 +280,14 @@
                         <i class="fa-solid fa-star text-amber-500 animate-pulse"></i> จำได้แล้ว!
                     </span>
                 </div>
-                <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center shadow-xs transition-colors">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button id="modal-favorite-btn" onclick="toggleFavoriteFromModal()" class="w-10 h-10 rounded-full bg-white hover:bg-pink-50 border border-pink-100 text-pink-500 flex items-center justify-center shadow-xs transition-colors" title="เพิ่มในรายการโปรด">
+                        <i class="fa-regular fa-heart text-lg"></i>
+                    </button>
+                    <button onclick="closeModal()" class="w-10 h-10 rounded-full bg-white hover:bg-slate-100 border border-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center shadow-xs transition-colors">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Modal Content Body -->
@@ -379,6 +391,33 @@
                 </div>
 
             </div>
+        </div>
+    </div>
+
+    <!-- Firebase Account Login Modal -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden transition-all">
+        <div class="bg-white rounded-[32px] w-full max-w-md p-6 border border-emerald-100 shadow-2xl relative">
+            <button onclick="closeAuthModal()" class="absolute right-5 top-5 text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="text-center mb-5">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-3">🔐</div>
+                <h3 id="auth-modal-title" class="text-xl font-extrabold text-slate-800">เข้าสู่ระบบ Dua Stars</h3>
+                <p id="auth-modal-subtitle" class="text-xs text-slate-500 mt-1">ซิงก์คะแนนและรายการโปรดไว้กับบัญชีของคุณ</p>
+            </div>
+            <div id="auth-user-panel" class="hidden mb-4 rounded-2xl bg-emerald-50 border border-emerald-100 p-4 text-center">
+                <p class="text-[10px] font-bold text-emerald-700">เข้าสู่ระบบแล้ว</p>
+                <p id="auth-user-email" class="text-sm font-extrabold text-emerald-950 mt-1 break-all"></p>
+                <button onclick="logoutAccount()" class="mt-3 text-xs font-bold text-rose-600 hover:text-rose-700">ออกจากระบบ</button>
+            </div>
+            <form id="auth-form" onsubmit="submitAuthForm(event)" class="flex flex-col gap-3">
+                <div id="auth-mode-tabs" class="grid grid-cols-2 gap-2 mb-1">
+                    <button type="button" id="auth-mode-login" onclick="switchAuthMode('login')" class="py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">เข้าสู่ระบบ</button>
+                    <button type="button" id="auth-mode-register" onclick="switchAuthMode('register')" class="py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-extrabold">สมัครสมาชิก</button>
+                </div>
+                <input id="auth-email" type="email" required autocomplete="email" placeholder="อีเมล" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <input id="auth-password" type="password" required minlength="6" autocomplete="current-password" placeholder="รหัสผ่านอย่างน้อย 6 ตัวอักษร" class="w-full px-4 py-3 rounded-2xl border-2 border-slate-100 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <button type="submit" id="auth-submit-button" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm shadow-md shadow-emerald-100">เข้าสู่ระบบ</button>
+                <button type="button" onclick="resetAuthPassword()" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold">ลืมรหัสผ่าน?</button>
+            </form>
         </div>
     </div>
 
@@ -500,7 +539,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, EmailAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, linkWithCredential, sendPasswordResetEmail, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase & App Configuration
@@ -2049,7 +2088,8 @@
         let state = {
             currentCategory: 'all',
             searchQuery: '',
-            memorizedDuas: [], 
+            memorizedDuas: [],
+            favoriteDuas: [],
             starsCount: 0,
             activeDuaId: null,
             activeModalTab: 'reading',
@@ -2073,6 +2113,7 @@
             // Local fallback saving
             localStorage.setItem('dua_stars_count', state.starsCount);
             localStorage.setItem('dua_memorized_list', JSON.stringify(state.memorizedDuas));
+            localStorage.setItem('dua_favorite_list', JSON.stringify(state.favoriteDuas));
             localStorage.setItem('dua_mascot', JSON.stringify(state.chosenMascot));
 
             // Online database syncing
@@ -2083,6 +2124,7 @@
                     await setDoc(docRef, {
                         starsCount: state.starsCount,
                         memorizedDuas: state.memorizedDuas,
+                        favoriteDuas: state.favoriteDuas,
                         chosenMascot: state.chosenMascot,
                         lastUpdated: new Date().toISOString()
                     }, { merge: true });
@@ -2095,12 +2137,16 @@
         function loadFromLocalStorage() {
             const savedStars = localStorage.getItem('dua_stars_count');
             const savedDuas = localStorage.getItem('dua_memorized_list');
+            const savedFavorites = localStorage.getItem('dua_favorite_list');
             const savedMascot = localStorage.getItem('dua_mascot');
             const savedCustomSync = localStorage.getItem('dua_sync_user_id');
 
             if (savedStars) state.starsCount = parseInt(savedStars, 10);
             if (savedDuas) {
                 try { state.memorizedDuas = JSON.parse(savedDuas); } catch (e) { state.memorizedDuas = []; }
+            }
+            if (savedFavorites) {
+                try { state.favoriteDuas = JSON.parse(savedFavorites); } catch (e) { state.favoriteDuas = []; }
             }
             if (savedMascot) {
                 try { state.chosenMascot = JSON.parse(savedMascot); } catch (e) { state.chosenMascot = { emoji: '⭐️', name: 'ดาราน้อย' }; }
@@ -2125,6 +2171,7 @@
                     const data = docSnap.data();
                     state.starsCount = data.starsCount || 0;
                     state.memorizedDuas = data.memorizedDuas || [];
+                    state.favoriteDuas = data.favoriteDuas || [];
                     state.chosenMascot = data.chosenMascot || { emoji: '⭐️', name: 'ดาราน้อย' };
                     
                     applyMascotUI();
@@ -2145,9 +2192,114 @@
             }
         }
 
+        let authMode = 'login';
+
+        function updateAuthUI() {
+            const label = document.getElementById('auth-header-label');
+            const userPanel = document.getElementById('auth-user-panel');
+            const userEmail = document.getElementById('auth-user-email');
+            const form = document.getElementById('auth-form');
+            const modeTabs = document.getElementById('auth-mode-tabs');
+            if (authUser && !authUser.isAnonymous) {
+                if (label) label.innerText = authUser.email || 'บัญชีของฉัน';
+                if (userPanel) userPanel.classList.remove('hidden');
+                if (userEmail) userEmail.innerText = authUser.email || '';
+                if (form) form.classList.add('hidden');
+                if (modeTabs) modeTabs.classList.add('hidden');
+            } else {
+                if (label) label.innerText = 'เข้าสู่ระบบ';
+                if (userPanel) userPanel.classList.add('hidden');
+                if (form) form.classList.remove('hidden');
+                if (modeTabs) modeTabs.classList.remove('hidden');
+            }
+        }
+
+        function openAuthModal() {
+            playSound('click');
+            updateAuthUI();
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            playSound('tick');
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function switchAuthMode(mode) {
+            authMode = mode;
+            const login = document.getElementById('auth-mode-login');
+            const register = document.getElementById('auth-mode-register');
+            const submit = document.getElementById('auth-submit-button');
+            if (mode === 'register') {
+                register.className = 'py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold';
+                login.className = 'py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-extrabold';
+                submit.innerText = 'สมัครสมาชิกและซิงก์ข้อมูล';
+            } else {
+                login.className = 'py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold';
+                register.className = 'py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-extrabold';
+                submit.innerText = 'เข้าสู่ระบบ';
+            }
+        }
+
+        async function submitAuthForm(event) {
+            event.preventDefault();
+            if (!auth) { alertModal('Firebase ยังไม่พร้อม กรุณาลองใหม่อีกครั้ง'); return; }
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            try {
+                if (authMode === 'register') {
+                    if (authUser?.isAnonymous) {
+                        const credential = EmailAuthProvider.credential(email, password);
+                        await linkWithCredential(authUser, credential);
+                    } else {
+                        await createUserWithEmailAndPassword(auth, email, password);
+                    }
+                    alertModal('สมัครสมาชิกสำเร็จ ข้อมูลจะซิงก์กับบัญชีนี้แล้ว');
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    alertModal('เข้าสู่ระบบสำเร็จ');
+                }
+                closeAuthModal();
+                updateAuthUI();
+            } catch (error) {
+                const messages = {
+                    'auth/email-already-in-use': 'อีเมลนี้ถูกใช้งานแล้ว กรุณาเข้าสู่ระบบแทน',
+                    'auth/invalid-credential': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+                    'auth/weak-password': 'รหัสผ่านควรมีอย่างน้อย 6 ตัวอักษร',
+                    'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
+                    'auth/operation-not-allowed': 'ยังไม่ได้เปิด Email/Password ใน Firebase Console'
+                };
+                alertModal(messages[error.code] || `เกิดข้อผิดพลาด: ${error.code || 'unknown'}`);
+                console.warn('Email authentication error:', error);
+            }
+        }
+
+        async function resetAuthPassword() {
+            const email = document.getElementById('auth-email').value.trim();
+            if (!email) { alertModal('กรุณากรอกอีเมลก่อนขอรีเซ็ตรหัสผ่าน'); return; }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alertModal('ส่งลิงก์รีเซ็ตรหัสผ่านไปยังอีเมลแล้ว');
+            } catch (error) {
+                alertModal('ไม่สามารถส่งลิงก์รีเซ็ตรหัสผ่านได้ กรุณาตรวจสอบอีเมล');
+            }
+        }
+
+        async function logoutAccount() {
+            try {
+                await signOut(auth);
+                closeAuthModal();
+                await signInAnonymously(auth);
+                alertModal('ออกจากระบบแล้ว และกลับสู่โหมด Guest');
+            } catch (error) {
+                console.warn('Logout error:', error);
+            }
+        }
+
         function markOfflineAuth(message) {
             isOnline = false;
             authUser = null;
+            updateAuthUI();
             const syncDisplay = document.getElementById('sync-code-display');
             if (syncDisplay) syncDisplay.value = message;
         }
@@ -2193,8 +2345,12 @@
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     authUser = user;
+                    updateAuthUI();
                     const syncIdToUse = state.syncUserId || user.uid;
                     setupRealtimeSync(syncIdToUse);
+                } else {
+                    authUser = null;
+                    updateAuthUI();
                 }
             });
         }
@@ -2286,7 +2442,9 @@
             grid.innerHTML = '';
 
             let filtered = DUAS_DB.filter(dua => {
-                const matchesCat = state.currentCategory === 'all' || dua.category === state.currentCategory;
+                const matchesCat = state.currentCategory === 'all'
+                    || (state.currentCategory === 'favorites' && state.favoriteDuas.includes(dua.id))
+                    || dua.category === state.currentCategory;
                 const matchesSearch = dua.title.toLowerCase().includes(state.searchQuery.toLowerCase()) || 
                                       dua.subtitle.toLowerCase().includes(state.searchQuery.toLowerCase()) || 
                                       dua.thaiTrans.toLowerCase().includes(state.searchQuery.toLowerCase());
@@ -2304,6 +2462,7 @@
 
             filtered.forEach(dua => {
                 const isMemorized = state.memorizedDuas.includes(dua.id);
+                const isFavorite = state.favoriteDuas.includes(dua.id);
                 
                 const card = document.createElement('div');
                 card.className = `p-6 rounded-[28px] border-2 ${dua.colorClass} bg-gradient-to-tr shadow-sm hover:shadow-md cursor-pointer transform hover:-translate-y-1.5 active:scale-98 transition-all duration-200 flex flex-col justify-between relative group overflow-hidden`;
@@ -2321,6 +2480,9 @@
                             <div class="flex items-center gap-1">
                                 <button onclick="event.stopPropagation(); window.playQuickArabicSpeech('${dua.arabic.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-50 text-indigo-600 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="ฟังเสียง">
                                     <i class="fa-solid fa-volume-high text-xs"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); toggleFavorite('${dua.id}')" class="w-8 h-8 rounded-xl bg-white hover:bg-pink-50 text-pink-500 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="${isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}">
+                                    <i class="${isFavorite ? 'fa-solid' : 'fa-regular'} fa-heart text-xs"></i>
                                 </button>
                                 ${isMemorized ? `
                                     <span class="bg-amber-100/90 text-amber-900 text-[10px] font-extrabold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-2xs border border-amber-200">
@@ -2388,6 +2550,36 @@
                 const badge = document.getElementById(`badge-${cat}`);
                 if (badge) badge.innerText = count;
             });
+            const favoriteBadge = document.getElementById('badge-favorites');
+            if (favoriteBadge) favoriteBadge.innerText = state.favoriteDuas.length;
+        }
+
+        function updateModalFavoriteButton() {
+            const button = document.getElementById('modal-favorite-btn');
+            if (!button) return;
+            const isFavorite = state.activeDuaId && state.favoriteDuas.includes(state.activeDuaId);
+            button.innerHTML = `<i class="${isFavorite ? 'fa-solid' : 'fa-regular'} fa-heart text-lg"></i>`;
+            button.title = isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด';
+            button.classList.toggle('bg-pink-100', Boolean(isFavorite));
+        }
+
+        function toggleFavorite(id) {
+            const index = state.favoriteDuas.indexOf(id);
+            if (index > -1) {
+                state.favoriteDuas.splice(index, 1);
+                alertModal('นำออกจากรายการโปรดแล้ว');
+            } else {
+                state.favoriteDuas.push(id);
+                alertModal('เพิ่มในรายการโปรดแล้ว ❤️');
+            }
+            saveProgressState();
+            updateCategoryBadgeCounts();
+            renderDuas();
+            if (state.activeDuaId === id) updateModalFavoriteButton();
+        }
+
+        function toggleFavoriteFromModal() {
+            if (state.activeDuaId) toggleFavorite(state.activeDuaId);
         }
 
         function openDuaModal(id) {
@@ -2415,6 +2607,7 @@
             catBadge.innerText = catLabel || 'ทั่วไป';
 
             const isAlreadyMemorized = state.memorizedDuas.includes(id);
+            updateModalFavoriteButton();
             const memorizedBadge = document.getElementById('modal-memorized-badge');
             const actionBtn = document.getElementById('modal-action-btn');
 
