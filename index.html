@@ -504,8 +504,16 @@
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase & App Configuration
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dua-stars-kids';
-        let firebaseConfig = {};
+        const appId = 'islamicvoip';
+        const firebaseConfig = {
+            apiKey: "AIzaSyC52i81nHMaVi-x6UFQeYmCcJtsVFFoSzw",
+            authDomain: "islamicvoip.firebaseapp.com",
+            projectId: "islamicvoip",
+            storageBucket: "islamicvoip.firebasestorage.app",
+            messagingSenderId: "367384567113",
+            appId: "1:367384567113:web:a5970b748559a3ec4b8e98",
+            measurementId: "G-R9Y46YHH7Q"
+        };
         let db = null;
         let auth = null;
         let isOnline = false;
@@ -513,13 +521,10 @@
         let unsubscribeSync = null;
 
         try {
-            if (typeof __firebase_config !== 'undefined') {
-                firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                isOnline = true;
-            }
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            isOnline = true;
         } catch (e) {
             console.warn("Firebase config missed or offline environment. Falling back to local offline mode.", e);
         }
@@ -2140,14 +2145,21 @@
             }
         }
 
+        function markOfflineAuth(message) {
+            isOnline = false;
+            authUser = null;
+            const syncDisplay = document.getElementById('sync-code-display');
+            if (syncDisplay) syncDisplay.value = message;
+        }
+
         // --- AUTHENTICATION INIT (RULE 3) ---
         async function initOnlineSession() {
             if (!isOnline) {
-                const syncDisplay = document.getElementById('sync-code-display');
-                if (syncDisplay) syncDisplay.value = "โหมดออฟไลน์ใช้งานบนเครื่องนี้เท่านั้น";
+                markOfflineAuth("โหมดออฟไลน์ใช้งานบนเครื่องนี้เท่านั้น");
                 return;
             }
 
+            let authError = null;
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -2155,12 +2167,27 @@
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                console.warn("Auth custom token issue, fallback to anonymous:", err);
-                try {
-                    await signInAnonymously(auth);
-                } catch (e2) {
-                    console.error("Auth failed completely. Fallback to local mode.", e2);
+                authError = err;
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInAnonymously(auth);
+                        authError = null;
+                    } catch (anonymousError) {
+                        authError = anonymousError;
+                    }
                 }
+            }
+
+            if (authError) {
+                const code = authError?.code || 'auth/unknown';
+                if (code === 'auth/configuration-not-found') {
+                    console.warn("Firebase Authentication is not configured for this project. Enable Anonymous sign-in in Firebase Console.");
+                    markOfflineAuth("ยังไม่ได้เปิด Anonymous Login ใน Firebase Console");
+                } else {
+                    console.warn("Firebase Authentication unavailable; using local mode.", authError);
+                    markOfflineAuth("เชื่อมต่อบัญชีไม่ได้ จึงใช้โหมดออฟไลน์");
+                }
+                return;
             }
 
             onAuthStateChanged(auth, (user) => {
