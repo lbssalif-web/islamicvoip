@@ -763,61 +763,72 @@
         }
 
         // --- DUAL ENGINE (HYBRID) TEXT TO SPEECH ---
+        function splitSpeechText(text, maxLength = 170) {
+            const words = text.trim().split(/\s+/);
+            const chunks = [];
+            let chunk = '';
+            for (const word of words) {
+                const candidate = chunk ? `${chunk} ${word}` : word;
+                if (candidate.length > maxLength && chunk) {
+                    chunks.push(chunk);
+                    chunk = word;
+                } else {
+                    chunk = candidate;
+                }
+            }
+            if (chunk) chunks.push(chunk);
+            return chunks;
+        }
+
         function speakText(text, lang = 'ar-SA', speed = 0.85) {
             try {
-                // ปลุกระบบประมวลผลเสียงของเบราว์เซอร์
                 initAudioContext();
-                
                 if (state.currentAudio) {
                     state.currentAudio.pause();
                     state.currentAudio = null;
                 }
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                }
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
                 const wave = document.getElementById('voice-wave-container');
-                if (wave && state.activeDuaId) {
-                    wave.classList.remove('hidden');
-                }
-
+                if (wave && state.activeDuaId) wave.classList.remove('hidden');
                 const cleanText = text.trim();
+                const chunks = splitSpeechText(cleanText, 170);
                 const isArabic = lang.startsWith('ar');
                 const cloudLang = isArabic ? 'ar' : 'th';
+                let chunkIndex = 0;
+                let fallbackStarted = false;
 
-                // ใช้ Google TTS โดยไม่มี Referrer ส่งผลให้อ่านได้เสถียรบน GitHub Pages
-                const cloudTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${cloudLang}&client=tw-ob&q=${encodeURIComponent(cleanText)}`;
-                
-                const audioPlayer = new Audio();
-                audioPlayer.src = cloudTtsUrl;
-                audioPlayer.playbackRate = speed;
-                state.currentAudio = audioPlayer;
-
-                audioPlayer.onplay = () => {
-                    if (wave && state.activeDuaId) {
-                        wave.classList.remove('hidden');
+                const playNextChunk = () => {
+                    if (chunkIndex >= chunks.length) {
+                        if (wave) wave.classList.add('hidden');
+                        state.currentAudio = null;
+                        return;
                     }
+                    const chunk = chunks[chunkIndex++];
+                    const cloudTtsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${cloudLang}&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+                    const audioPlayer = new Audio(cloudTtsUrl);
+                    audioPlayer.preload = 'auto';
+                    audioPlayer.playbackRate = speed;
+                    state.currentAudio = audioPlayer;
+                    let handledError = false;
+                    const fallbackRemaining = () => {
+                        if (handledError || fallbackStarted) return;
+                        handledError = true;
+                        fallbackStarted = true;
+                        if (wave) wave.classList.add('hidden');
+                        const remaining = [chunk, ...chunks.slice(chunkIndex)].join(' ');
+                        playNativeSpeechFallback(remaining, lang, speed);
+                        state.currentAudio = null;
+                    };
+                    audioPlayer.onplay = () => { if (wave && state.activeDuaId) wave.classList.remove('hidden'); };
+                    audioPlayer.onended = () => { state.currentAudio = null; playNextChunk(); };
+                    audioPlayer.onerror = fallbackRemaining;
+                    audioPlayer.play().catch(fallbackRemaining);
                 };
-
-                audioPlayer.onended = () => {
-                    if (wave) wave.classList.add('hidden');
-                    state.currentAudio = null;
-                };
-
-                audioPlayer.onerror = (e) => {
-                    console.warn("Cloud Speech failed (Possibly CORS/Network), falling back to browser Native Speech API...", e);
-                    playNativeSpeechFallback(cleanText, lang, speed);
-                };
-
-                audioPlayer.play().catch(err => {
-                    console.warn("Autoplay block or network error, using native fallback...", err);
-                    playNativeSpeechFallback(cleanText, lang, speed);
-                });
-
+                playNextChunk();
             } catch (error) {
-                console.error("Speech service issue: ", error);
-                const wave = document.getElementById('voice-wave-container');
-                if (wave) wave.classList.add('hidden');
+                console.error('Speech service issue:', error);
+                playNativeSpeechFallback(text, lang, speed);
             }
         }
 
@@ -960,16 +971,51 @@
             }
         }
 
-        function playQuickArabicSpeech(text) {
+        const GITHUB_AUDIO_BASE_URL = 'https://raw.githubusercontent.com/lbssalif-web/islamicvoip/main/';
+
+        function getGithubAudioUrl(dua) {
+            if (!dua?.githubAudioFile) return null;
+            return `${GITHUB_AUDIO_BASE_URL}${dua.githubAudioFile.split('/').map(encodeURIComponent).join('/')}`;
+        }
+
+        function playQuranAudio(url, fallbackText, backupUrl = null) {
+            initAudioContext();
+            if (state.currentAudio) { state.currentAudio.pause(); state.currentAudio = null; }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            const wave = document.getElementById('voice-wave-container');
+            if (wave && state.activeDuaId) wave.classList.remove('hidden');
+            const audioPlayer = new Audio(url);
+            audioPlayer.preload = 'auto';
+            state.currentAudio = audioPlayer;
+            audioPlayer.onplay = () => { if (wave && state.activeDuaId) wave.classList.remove('hidden'); };
+            audioPlayer.onended = () => { if (wave) wave.classList.add('hidden'); state.currentAudio = null; };
+            const fallback = () => {
+                if (wave) wave.classList.add('hidden');
+                state.currentAudio = null;
+                if (backupUrl && backupUrl !== url) playQuranAudio(backupUrl, fallbackText);
+                else speakText(fallbackText, 'ar-SA', 0.78);
+            };
+            audioPlayer.onerror = fallback;
+            audioPlayer.play().catch(fallback);
+        }
+
+        function playQuickArabicSpeech(idOrText, maybeText) {
             playSound('click');
-            speakText(text, 'ar-SA', 0.82);
+            const dua = DUAS_DB.find(item => item.id === idOrText);
+            if (dua) {
+                const githubUrl = getGithubAudioUrl(dua);
+                if (githubUrl || dua.audioUrl) playQuranAudio(githubUrl || dua.audioUrl, dua.arabic, githubUrl ? dua.audioUrl : null);
+                else speakText(maybeText || idOrText, 'ar-SA', 0.82);
+            } else speakText(maybeText || idOrText, 'ar-SA', 0.82);
         }
 
         function playArabicSpeechFromModal() {
             if (!state.activeDuaId) return;
             const dua = DUAS_DB.find(d => d.id === state.activeDuaId);
             if (dua) {
-                speakText(dua.arabic, 'ar-SA', 0.78); 
+                const githubUrl = getGithubAudioUrl(dua);
+                if (githubUrl || dua.audioUrl) playQuranAudio(githubUrl || dua.audioUrl, dua.arabic, githubUrl ? dua.audioUrl : null);
+                else speakText(dua.arabic, 'ar-SA', 0.78);
             }
         }
 
@@ -1915,6 +1961,8 @@
                 thaiTrans: "อัลลอฮุ ลา อิลาฮะ อิลลา ฮุวัลฮัยยุลก็อยยูม ลา ตะอ์คุซุฮู ซินะตุน วะลา นัวม์ ละฮู มา ฟิสสะมาวาติ วะมา ฟิลอัรฎ์ มัน ซัลละซี ยัชฟะอุ อินดะฮู อิลลา บิอิซนิฮี ยะอ์ละมุ มา บัยนะ อัยดีฮิม วะมา ค็อลฟะฮุม วะลา ยูหีฏูนะ บิชัยอิน มิน อิลมิฮี อิลลา บิมา ชาอะ วะสิอะ กุรซียยุฮุสสะมาวาติ วัลอัรฎ์ วะลา ยะอูดูฮู หิฟซุฮุมา วะฮุวัลอะลียุลอะซีม",
                 thaiTranslation: "อัลลอฮ์ ไม่มีพระเจ้าอื่นใดนอกจากพระองค์ ผู้ทรงมีชีวิต ผู้ทรงค้ำจุนทุกสิ่ง การง่วงนอนและการนอนไม่ครอบงำพระองค์ สิ่งที่อยู่ในชั้นฟ้าทั้งหลายและแผ่นดินเป็นกรรมสิทธิ์ของพระองค์ ใครเล่าจะช่วยวิงวอน ณ พระองค์ได้ นอกจากด้วยการอนุมัติของพระองค์ พระองค์ทรงรู้สิ่งที่อยู่เบื้องหน้าและเบื้องหลังพวกเขา และพวกเขาไม่อาจหยั่งรู้สิ่งใดจากความรู้ของพระองค์ได้ เว้นแต่สิ่งที่พระองค์ทรงประสงค์ บัลลังก์ของพระองค์ครอบคลุมชั้นฟ้าทั้งหลายและแผ่นดิน และการพิทักษ์รักษาทั้งสองนั้นไม่ทำให้พระองค์เหน็ดเหนื่อย และพระองค์คือผู้ทรงสูงส่ง ผู้ทรงยิ่งใหญ่",
                 evidence: "ตัวบทอาหรับคืออัล-บะเกาะเราะฮ์ 2:255 (อายะตุลกุรซีย์) จาก Quran.com. หะดีษ Sahih al-Bukhari 2311 รายงานจากอบูฮุร็อยเราะฮ์ رضي الله عنه ว่าเมื่อเข้านอนให้ recite Ayat al-Kursi จนจบอายะฮ์ แล้วอัลลอฮ์จะทรงแต่งผู้พิทักษ์ไว้และชัยฏอนจะไม่เข้าใกล้จนถึงเช้า; ท่านนบี ﷺ ยืนยันว่าคำกล่าวนั้นเป็นความจริง แม้ผู้บอกคือชัยฏอน ซึ่งท่านระบุภายหลังว่าเป็นชัยฏอน แหล่งอ้างอิง: https://quran.com/2/255 ; https://sunnah.com/bukhari:2311",
+                audioUrl: "https://everyayah.com/data/Alafasy_128kbps/002255.mp3",
+                githubAudioFile: "audio/dua_h23.mp3",
                 icon: "fa-moon",
                 colorClass: "from-indigo-50/50 to-indigo-100 hover:shadow-indigo-100 border-indigo-200",
             },
@@ -2987,7 +3035,7 @@
                             
                             <!-- Star Badge indicator -->
                             <div class="flex items-center gap-1">
-                                <button onclick="event.stopPropagation(); window.playQuickArabicSpeech('${dua.arabic.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-50 text-indigo-600 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="ฟังเสียง">
+                                <button onclick="event.stopPropagation(); window.playQuickArabicSpeech('${dua.id}', '${dua.arabic.replace(/'/g, "\\'")}')" class="w-8 h-8 rounded-xl bg-white hover:bg-indigo-50 text-indigo-600 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="ฟังเสียง">
                                     <i class="fa-solid fa-volume-high text-xs"></i>
                                 </button>
                                 <button onclick="event.stopPropagation(); toggleFavorite('${dua.id}')" class="w-8 h-8 rounded-xl bg-white hover:bg-pink-50 text-pink-500 shadow-3xs flex items-center justify-center transition-transform hover:scale-110" title="${isFavorite ? 'ลบออกจากรายการโปรด' : 'เพิ่มในรายการโปรด'}">
