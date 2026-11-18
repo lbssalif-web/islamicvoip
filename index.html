@@ -782,6 +782,7 @@
 
         function speakText(text, lang = 'ar-SA', speed = 0.85) {
             try {
+                const session = ++state.audioSession;
                 initAudioContext();
                 if (state.currentAudio) {
                     state.currentAudio.pause();
@@ -799,6 +800,7 @@
                 let fallbackStarted = false;
 
                 const playNextChunk = () => {
+                    if (session !== state.audioSession) return;
                     if (chunkIndex >= chunks.length) {
                         if (wave) wave.classList.add('hidden');
                         state.currentAudio = null;
@@ -812,7 +814,7 @@
                     state.currentAudio = audioPlayer;
                     let handledError = false;
                     const fallbackRemaining = () => {
-                        if (handledError || fallbackStarted) return;
+                        if (session !== state.audioSession || handledError || fallbackStarted) return;
                         handledError = true;
                         fallbackStarted = true;
                         if (wave) wave.classList.add('hidden');
@@ -821,7 +823,11 @@
                         state.currentAudio = null;
                     };
                     audioPlayer.onplay = () => { if (wave && state.activeDuaId) wave.classList.remove('hidden'); };
-                    audioPlayer.onended = () => { state.currentAudio = null; playNextChunk(); };
+                    audioPlayer.onended = () => {
+                        if (session !== state.audioSession) return;
+                        state.currentAudio = null;
+                        playNextChunk();
+                    };
                     audioPlayer.onerror = fallbackRemaining;
                     audioPlayer.play().catch(fallbackRemaining);
                 };
@@ -832,102 +838,76 @@
             }
         }
 
-        async function speakThaiChildVoice(text) {
+        function speakThaiChildVoice(text) {
+            const session = ++state.audioSession;
             const wave = document.getElementById('voice-wave-container');
             const thaiBtn = document.getElementById('btn-speak-thai');
             const btnText = document.getElementById('thai-btn-text');
             const btnIcon = document.getElementById('thai-btn-icon');
+            const chunks = splitSpeechText(text, 150);
 
             initAudioContext();
+            if (state.currentAudio) { state.currentAudio.pause(); state.currentAudio = null; }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            if (thaiBtn) thaiBtn.disabled = true;
+            if (btnText) btnText.innerText = 'กำลังเตรียมเสียงเด็กน้อย...';
+            if (btnIcon) btnIcon.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-pink-500"></i>';
+            if (wave && state.activeDuaId) wave.classList.remove('hidden');
 
-            if (state.currentAudio) {
-                state.currentAudio.pause();
-                state.currentAudio = null;
-            }
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
+            const finish = () => {
+                if (thaiBtn) thaiBtn.disabled = false;
+                if (btnText) btnText.innerText = 'ฟังเสียงเด็กน้อยแปลความหมาย';
+                if (btnIcon) btnIcon.innerHTML = '<i class="fa-solid fa-baby text-pink-500 text-base"></i>';
+            };
 
-            try {
-                thaiBtn.disabled = true;
-                btnText.innerText = "กำลังเตรียมเสียงเด็กน้อย...";
-                btnIcon.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-pink-500"></i>`;
-                if (wave && state.activeDuaId) wave.classList.remove('hidden');
-
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-
-                const payload = {
-                    contents: [{
-                        parts: [{ 
-                            text: `กรุณาพากย์เสียงสวมบทบาทเป็นเด็กน้อยตัวเล็กน่ารัก สดใส อารมณ์ดี อ่อนโยน และพูดจาชัดถ้อยชัดคำเป็นภาษาไทยเพื่ออ่านความหมายของดุอาอ์ต่อไปนี้: "${text}"` 
-                        }]
-                    }],
-                    generationConfig: {
-                        responseModalalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: {
-                                prebuiltVoiceConfig: { voiceName: "Leda" } 
-                            }
-                        }
-                    },
-                    model: "gemini-2.5-flash-preview-tts"
+            const useGoogleFallback = () => {
+                if (wave) wave.classList.add('hidden');
+                let index = 0;
+                const playNext = () => {
+                    if (session !== state.audioSession) return;
+                    if (index >= chunks.length) { finish(); return; }
+                    const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&tl=th&client=tw-ob&q=${encodeURIComponent(chunks[index++])}`);
+                    audio.playbackRate = 0.92;
+                    state.currentAudio = audio;
+                    audio.onplay = () => { if (wave && state.activeDuaId) wave.classList.remove('hidden'); };
+                    audio.onended = playNext;
+                    audio.onerror = playNext;
+                    audio.play().catch(playNext);
                 };
+                playNext();
+            };
 
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!response.ok) {
-                    throw new Error("Gemini API request failed");
-                }
-
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType && mimeType.startsWith("audio/")) {
-                    let sampleRate = 24000;
-                    const rateMatch = mimeType.match(/rate=(\d+)/);
-                    if (rateMatch) {
-                        sampleRate = parseInt(rateMatch[1], 10);
-                    }
-
-                    const pcmData = base64ToArrayBuffer(audioData);
-                    const pcm16 = new Int16Array(pcmData);
-                    const wavBlob = pcmToWav(pcm16, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-
-                    const audioPlayer = new Audio(audioUrl);
-                    state.currentAudio = audioPlayer;
-
-                    audioPlayer.onended = () => {
-                        if (wave) wave.classList.add('hidden');
-                        state.currentAudio = null;
-                    };
-
-                    audioPlayer.onerror = () => {
-                        if (wave) wave.classList.add('hidden');
-                        state.currentAudio = null;
-                        playNativeSpeechFallback(text, 'th-TH', 0.9);
-                    };
-
-                    await audioPlayer.play();
-                } else {
-                    throw new Error("Invalid audio response format");
-                }
-
-            } catch (err) {
-                console.warn("Gemini Live TTS Failed. Falling back to native highly pitched child voice: ", err);
-                playNativeSpeechFallback(text, 'th-TH', 0.9);
-            } finally {
-                thaiBtn.disabled = false;
-                btnText.innerText = "ฟังเสียงเด็กน้อยแปลความหมาย";
-                btnIcon.innerHTML = `<i class="fa-solid fa-baby text-pink-500 text-base animate-bounce"></i>`;
+            if (!('speechSynthesis' in window) || !window.SpeechSynthesisUtterance) {
+                useGoogleFallback();
+                return;
             }
+
+            const voices = window.speechSynthesis.getVoices();
+            const thaiVoice = voices.find(v => /^th(-|_)/i.test(v.lang)) || voices.find(v => v.lang.toLowerCase().includes('th'));
+            let index = 0;
+            let failed = false;
+            const speakNext = () => {
+                if (session !== state.audioSession || failed) return;
+                if (index >= chunks.length) { if (wave) wave.classList.add('hidden'); finish(); return; }
+                const utterance = new SpeechSynthesisUtterance(chunks[index++]);
+                utterance.lang = thaiVoice?.lang || 'th-TH';
+                if (thaiVoice) utterance.voice = thaiVoice;
+                utterance.rate = 0.86;
+                utterance.pitch = 1.55;
+                utterance.onstart = () => { if (wave && state.activeDuaId) wave.classList.remove('hidden'); };
+                utterance.onend = () => { if (session === state.audioSession) speakNext(); };
+                utterance.onerror = () => {
+                    if (session !== state.audioSession) return;
+                    failed = true;
+                    window.speechSynthesis.cancel();
+                    useGoogleFallback();
+                };
+                window.speechSynthesis.speak(utterance);
+            };
+
+            // Start immediately from the user's tap so mobile autoplay policies allow speech.
+            // If a Thai voice is not loaded yet, the browser still uses the th-TH language hint.
+            speakNext();
         }
 
         function playNativeSpeechFallback(text, lang, speed) {
@@ -974,11 +954,13 @@
         const GITHUB_AUDIO_BASE_URL = 'https://raw.githubusercontent.com/lbssalif-web/islamicvoip/main/';
 
         function getGithubAudioUrl(dua) {
-            if (!dua?.githubAudioFile) return null;
-            return `${GITHUB_AUDIO_BASE_URL}${dua.githubAudioFile.split('/').map(encodeURIComponent).join('/')}`;
+            if (!dua?.id) return null;
+            const audioFile = dua.githubAudioFile || `audio/${dua.id}.mp3`;
+            return `${GITHUB_AUDIO_BASE_URL}${audioFile.split('/').map(encodeURIComponent).join('/')}`;
         }
 
         function playQuranAudio(url, fallbackText, backupUrl = null) {
+            const session = ++state.audioSession;
             initAudioContext();
             if (state.currentAudio) { state.currentAudio.pause(); state.currentAudio = null; }
             if ('speechSynthesis' in window) window.speechSynthesis.cancel();
@@ -988,12 +970,49 @@
             audioPlayer.preload = 'auto';
             state.currentAudio = audioPlayer;
             audioPlayer.onplay = () => { if (wave && state.activeDuaId) wave.classList.remove('hidden'); };
-            audioPlayer.onended = () => { if (wave) wave.classList.add('hidden'); state.currentAudio = null; };
+            audioPlayer.onended = () => {
+                if (session !== state.audioSession) return;
+                if (wave) wave.classList.add('hidden');
+                state.currentAudio = null;
+            };
             const fallback = () => {
+                if (session !== state.audioSession) return;
                 if (wave) wave.classList.add('hidden');
                 state.currentAudio = null;
                 if (backupUrl && backupUrl !== url) playQuranAudio(backupUrl, fallbackText);
                 else speakText(fallbackText, 'ar-SA', 0.78);
+            };
+            audioPlayer.onerror = fallback;
+            audioPlayer.play().catch(fallback);
+        }
+
+
+        function getChildTranslationAudioUrl(dua) {
+            if (!dua?.id) return null;
+            return `${GITHUB_AUDIO_BASE_URL}audio/child_${encodeURIComponent(dua.id)}.mp3`;
+        }
+
+        function playChildTranslationAudio(url, fallbackText) {
+            const session = ++state.audioSession;
+            initAudioContext();
+            if (state.currentAudio) { state.currentAudio.pause(); state.currentAudio = null; }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            const wave = document.getElementById('voice-wave-container');
+            const audioPlayer = new Audio(url);
+            audioPlayer.preload = 'auto';
+            audioPlayer.playbackRate = 1;
+            state.currentAudio = audioPlayer;
+            audioPlayer.onplay = () => { if (wave && state.activeDuaId) wave.classList.remove('hidden'); };
+            audioPlayer.onended = () => {
+                if (session !== state.audioSession) return;
+                if (wave) wave.classList.add('hidden');
+                state.currentAudio = null;
+            };
+            const fallback = () => {
+                if (session !== state.audioSession) return;
+                if (wave) wave.classList.add('hidden');
+                state.currentAudio = null;
+                speakThaiChildVoice(fallbackText);
             };
             audioPlayer.onerror = fallback;
             audioPlayer.play().catch(fallback);
@@ -1023,7 +1042,8 @@
             if (!state.activeDuaId) return;
             const dua = DUAS_DB.find(d => d.id === state.activeDuaId);
             if (dua) {
-                speakThaiChildVoice(dua.thaiTranslation);
+                const childUrl = getChildTranslationAudioUrl(dua);
+                playChildTranslationAudio(childUrl, dua.thaiTranslation);
             }
         }
 
@@ -1057,8 +1077,8 @@
                 title: "ดุอาอ์ขณะสวมใส่เสื้อผ้า",
                 subtitle: "ขอบคุณสิ่งทอที่สวมใส่ปกปิดร่างกายและมอบความงดงาม",
                 category: "routine",
-                arabic: "الْحَمْدُ لِلَّهِ الَّذِي كَسَانِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",
-                thaiTrans: "อัลฮัมดุลิลลาฮิลละซี กะสานี ฮาซา วะเราะซะเกาะนีฮิ มินฆ็อยริ เฮาลิน มินนี วะลา กุววะฮ์",
+                arabic: "الْحَمْدُ لِلَّهِ الَّذِي كَسَانِي هَذَا الثَّوْบَ وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",
+                thaiTrans: "อัลฮัมดู ลิลลาฮิลละซี กะซานี ฮาซัษเษาว์บะ วะเราะซะเกาะนีฮิ มินฆ็อยริ เฮาลิน มินนี วะลา กุววะฮ์",
                 thaiTranslation: "การสรรเสริญทั้งมวลเป็นสิทธิ์ของอัลลอฮ์ ผู้ทรงให้ฉันสวมใส่เสื้อผ้านี้ และประทานมันให้ฉัน โดยไม่ได้เกิดจากความรอบรู้หรือกำลังความสามารถของฉันเองเลย",
                 evidence: "หะดีษศอฮีห์ บันทึกโดย อะบูดาวุด (เลขที่ 4023) และ อัต-ติรมิซีย์ (เลขที่ 3458) ท่านนบีรับประกันว่าผู้สวมใส่ผ้าแล้วกล่าวดุอาอ์นี้จะได้รับการอภัยในบาปที่ผ่านมา",
                 icon: "fa-shirt",
@@ -1069,7 +1089,7 @@
                 title: "ดุอาอ์เมื่อฝนตก",
                 subtitle: "วิงวอนขอให้ฝนนี้เป็นน้ำฝนอันจำเริญที่ให้คุณประโยชน์แก่พืชพรรณและผู้คน",
                 category: "routine",
-                arabic: "اللَّهُمَّ صَيِّبًا نَافِعًا",
+                arabic: "اللَّهُمَّ صَيِّبًا นَافِعًا",
                 thaiTrans: "อัลลอฮุมมะ ศ็อยยิบัน นาฟิอัน",
                 thaiTranslation: "โอ้อัลลอฮ์ โปรดประทานฝนที่หลั่งไหลลงมาอย่างนำพาคุณประโยชน์แก่เราด้วยเถิด",
                 evidence: "หะดีษศอฮีห์ บันทึกโดย อัล-บุคอรีย์ (เลขที่ 1032) รายงานโดยท่านหญิงอาอิชะฮ์ ร่อฎิยัลลอฮุอันฮา เมื่อเห็นเม็ดฝนตกลงมาจากฟากฟ้าท่านนบีมักจะขอดุอาอ์บทนี้เสมอเพื่อความเป็นสิริมงคล",
@@ -1277,7 +1297,6 @@
                 thaiTrans: "วะมินฮุม มัยยะกูลู ร็อบบะนา อาตินา ฟิดดุนยา หะสานะตัน วะฟิลอาคิเราะติ หะสานะตัน วะกินา อะซาบันนาร",
                 thaiTranslation: "และในหมู่พวกเขานั้น มีผู้ที่กล่าวว่า โอ้พระเจ้าของเรา โปรดประทานให้แก่พวกเรา ซึ่งสิ่งดีงามในโลกนี้ และสิ่งดีงามในปรโลก และโปรดคุ้มครองพวกเราให้พ้นจากการลงโทษแห่งไฟนรกด้วยเถิด",
                 evidence: "อัลกุรอาน ซูเราะฮ์อัล-บะเกาะเราะฮ์ 2:201 เป็นอายะฮ์ที่มีตัวบทดุอาอ์โดยตรง ไม่ใช่หะดีษ จึงไม่มีการจัดระดับเศาะฮีห์/หะสันแบบหะดีษ แหล่งอ้างอิง: https://quran.com/th/2/201",
-                githubAudioFile: "audio/dua_q01.mp3",
                 icon: "fa-moon",
                 colorClass: "from-indigo-50/50 to-indigo-100 hover:shadow-indigo-100 border-indigo-200",
             },
@@ -1338,7 +1357,6 @@
                 thaiTrans: "วัลละซีนะ ญาอู มิน บะอ์ดิฮิม ยะกูลูนะ ร็อบบะนา อิฆฟิร ละนา วะลิอิควานินา อัลละซีนะ สะบะกูนา บิลอีมาน วะลา ตัจอัล ฟี กุลูบินา ฆิลลัน ลิลละซีนะ อามะนู ร็อบบะนา อินนะกะ เราะอูฟุร เราะฮีม",
                 thaiTranslation: "และบรรดาผู้ที่มาภายหลังพวกเขาจะวิงวอนว่า โอ้พระผู้อภิบาลของเรา โปรดอภัยโทษแก่เราและพี่น้องของเราผู้มาก่อนหน้าเราด้วยศรัทธา และอย่าให้มีความคับแค้นชิงชังใด ๆ ในหัวใจของเราต่อบรรดาผู้ศรัทธา โอ้พระผู้อภิบาลของเรา แท้จริงพระองค์ทรงเมตตาอ่อนโยนยิ่ง ทรงกรุณาปรานียิ่ง",
                 evidence: "อัลกุรอาน ซูเราะฮ์อัล-หัชร 59:10; Quran.com แสดงตัวบทอาหรับและคำแปลภาษาอังกฤษว่า ผู้ศรัทธารุ่นหลังขออภัยแก่ตนเองและผู้ศรัทธาที่มาก่อน และขออย่าให้ความขุ่นเคืองอยู่ในหัวใจต่อผู้ศรัทธา แหล่งอ้างอิง: https://quran.com/59/10",
-                githubAudioFile: "audio/dua_q06.mp3",
                 icon: "fa-heart",
                 colorClass: "from-pink-50/50 to-pink-100 hover:shadow-pink-100 border-pink-200",
             },
@@ -1375,7 +1393,6 @@
                 thaiTrans: "ร็อบบะนา ลา ตุอาคิซนา อิน นะซีนา เอา อัคเฏาะอ์นา; ร็อบบะนา วะลา ตะห์มิล อะลัยนา อิศร็อน กะมา หะมาลตะฮู อะลัลละซีนะ มิน ก็อบลินา; ร็อบบะนา วะลา ตุหัมมิลนา มา ลา ฏอเกาะตะ ละนา บิฮี; วะอ์ฟุ อันนา วัฆฟิร ละนา วัรหัมนา; อันตะ เมาลานา ฟันศุรนา อะลัลเกามิลกาฟิรีน",
                 thaiTranslation: "โอ้พระผู้อภิบาลของเรา โปรดอย่าลงโทษเรา หากเราลืมหรือทำผิดพลาด โอ้พระผู้อภิบาลของเรา โปรดอย่าวางภาระหนักแก่เราเช่นที่พระองค์ทรงวางแก่ผู้คนก่อนหน้าเรา โอ้พระผู้อภิบาลของเรา โปรดอย่าให้เราแบกรับสิ่งที่เราไม่มีกำลังจะรับได้ โปรดอภัยแก่เรา โปรดยกโทษให้เรา และโปรดเมตตาเรา พระองค์คือผู้คุ้มครองของเรา ดังนั้นโปรดให้เรามีชัยเหนือกลุ่มชนผู้ปฏิเสธศรัทธาด้วยเถิด",
                 evidence: "ส่วนคำวิงวอนท้ายอายะฮ์อัล-บะเกาะเราะฮ์ 2:286 (เริ่มที่ رَبَّنَا لَا تُؤَاخِذْنَا และจบที่ فَٱنصُرْنَا عَلَى ٱلْقَوْمِ ٱلْكَٰفِرِينَ) โดยตรวจตัวบทอาหรับจาก Quran.com และ Quran.com API; ไม่ใช่หะดีษ จึงไม่ได้จัดระดับเป็นเศาะฮีห์หรือหะสัน แหล่งอ้างอิง: https://quran.com/al-baqarah/286",
-                githubAudioFile: "audio/dua_q09.mp3",
                 icon: "fa-book-open",
                 colorClass: "from-purple-50/50 to-purple-100 hover:shadow-purple-100 border-purple-200",
             },
@@ -1424,7 +1441,6 @@
                 thaiTrans: "กอละ ร็อบบิชเราะห์ ลี ศ็อดรี วะยัสสิร ลี อัมรี วะห์ลุล อุกดะตัน มิน ลิซานี ยัฟเกาะฮู เกาลี",
                 thaiTranslation: "ข้าแต่พระผู้อภิบาลของข้าพระองค์ โปรดเปิดอกของข้าพระองค์ให้กว้าง โปรดทำภารกิจของข้าพระองค์ให้สะดวกง่ายดาย และโปรดคลายปมจากลิ้นของข้าพระองค์ เพื่อพวกเขาจะได้เข้าใจคำพูดของข้าพระองค์",
                 evidence: "อัลกุรอาน ซูเราะฮ์ฏอฮา 20:25-28: คำวิงวอนของมูซา عليه السلام ขอให้หัวใจมีความมั่นคง ภารกิจง่ายดาย การพูดชัดเจน และผู้ฟังเข้าใจ; Quran.com แสดงตัวบทและคำแปลว่า “My Lord! Uplift my heart for me, and make my task easy, and remove the impediment from my tongue, so people may understand my speech.” แหล่งอ้างอิง: https://quran.com/taha/25-28",
-                githubAudioFile: "audio/dua_q13.mp3",
                 icon: "fa-book-open",
                 colorClass: "from-purple-50/50 to-purple-100 hover:shadow-purple-100 border-purple-200",
             },
@@ -1449,7 +1465,6 @@
                 thaiTrans: "ร็อบบี อินนี ลิมา อันซัลตะ อิลัยยะ มิน ค็อยริน ฟะกีร",
                 thaiTranslation: "ข้าแต่พระผู้อภิบาลของฉัน แท้จริงฉันเป็นผู้ขัดสนอย่างยิ่งต่อความดีใด ๆ ที่พระองค์ทรงประทานมายังฉัน",
                 evidence: "ส่วนดุอาอ์จากซูเราะฮ์อัลเกาะศ็อศ 28:24 (คำกล่าวของมูซา อะลัยฮิสสลาม หลังให้น้ำฝูงสัตว์แก่หญิงสองคน) ตัวบทและคำแปลอ้างอิง Quran.com ซึ่งแสดงอายะฮ์เต็มว่า فَسَقَىٰ لَهُمَا ثُمَّ تَوَلَّىٰٓ إِلَى ٱلظِّلِّ فَقَالَ رَبِّ إِنِّي لِمَآ أَنزَلۡتَ إِلَيَّ مِنۡ خَيۡرٖ فَقِيرٞ; ไม่ใช่หะดีษ จึงไม่มีการจัดระดับเศาะฮีห์/หะสัน แหล่งอ้างอิง: https://quran.com/28/24",
-                githubAudioFile: "audio/dua_q15.mp3",
                 icon: "fa-moon",
                 colorClass: "from-indigo-50/50 to-indigo-100 hover:shadow-indigo-100 border-indigo-200",
             },
@@ -1486,7 +1501,6 @@
                 thaiTrans: "วะอินนี คิฟตุลมะวาลิยะ มิน วะรออี วะกานะติมรอะตี อากิร็อน ฟะฮับ ลี มิน ละดุนกะ วะลียยา ۝ ยะริษุนี วะยะริษุ มิน อาลิ ยะอ์กูบะ วัจอัลฮุ ร็อบบิ เราะฎียยา",
                 thaiTranslation: "และแท้จริง ข้าพระองค์หวั่นเกรงบรรดาญาติผู้สืบทอดหลังจากข้าพระองค์ ขณะที่ภรรยาของข้าพระองค์เป็นหมัน ดังนั้นโปรดประทานผู้สืบทอดแก่ข้าพระองค์จากพระองค์ด้วยเถิด ผู้ซึ่งจะสืบทอดจากข้าพระองค์และจากวงศ์วานของยะอ์กูบ และโปรดทำให้เขาเป็นที่โปรดปราน โอ้พระผู้อภิบาลของข้าพระองค์",
                 evidence: "อัลกุรอาน ซูเราะฮ์มัรยัม 19:5-6 เป็นคำวิงวอนของศาสดาซะกะรียาอะลัยฮิสสลาม ขอผู้สืบทอดที่ดีจากอัลลอฮ์; ตัวบทและหมายเลขอายะฮ์ตรวจจาก Quran.com โดยตรง จึงเป็นหลักฐานอัลกุรอาน ไม่ใช่หะดีษ และไม่ควรเรียกว่าเศาะฮีห์ในฐานะการจัดระดับหะดีษ แหล่งอ้างอิง: https://quran.com/19/5-6",
-                githubAudioFile: "audio/dua_q18.mp3",
                 icon: "fa-heart",
                 colorClass: "from-pink-50/50 to-pink-100 hover:shadow-pink-100 border-pink-200",
             },
@@ -1571,7 +1585,6 @@
                 thaiTrans: "วะกุล ร็อบบิ อะอูซุ บิกะ มิน ฮะมะซาติช-ชัยยาฏีน ۝๙๗ วะอะอูซุ บิกะ ร็อบบิ อัน ยะห์ฎุรูน ۝๙๘",
                 thaiTranslation: "และจงกล่าวเถิดว่า ‘โอ้พระผู้อภิบาลของข้าพระองค์ ข้าพระองค์ขอความคุ้มครองต่อพระองค์ให้พ้นจากการยั่วยุของเหล่าชัยฏอน และข้าพระองค์ขอความคุ้มครองต่อพระองค์ โอ้พระผู้อภิบาลของข้าพระองค์ มิให้พวกมันเข้าใกล้ข้าพระองค์’",
                 evidence: "อัลกุรอาน ซูเราะฮ์อัลมุอ์มินูน 23:97–98 โดย Quran.com: อายะฮ์ 23:97 ระบุ وَقُلْ رَبِّ أَعُوذُ بِكَ مِنْ هَمَزَاتِ الشَّيَاطِينِ และอายะฮ์ 23:98 ระบุ وَأَعُوذُ بِكَ رَبِّ أَنْ يَحْضُرُونِ; เป็นดุอาอ์จากอัลกุรอานโดยตรง ไม่ใช่บทหะดีษ แหล่งอ้างอิง: https://quran.com/23/97-98",
-                githubAudioFile: "audio/dua_q25.mp3",
                 icon: "fa-book-open",
                 colorClass: "from-purple-50/50 to-purple-100 hover:shadow-purple-100 border-purple-200",
             },
@@ -1608,7 +1621,6 @@
                 thaiTrans: "ร็อบบิ ฮับ ลี หุกมัน วะอัลฮิกนี บิศศอลิฮีน วัจอัล ลี ลิซานะ ศิดกิน ฟิลอาคิรีน วัจอัลนี มิน วะเราะษะติ ญันนาตินนะอีม วัฆฟิร ลีอะบี อินนะฮู กานะ มินัดดอลลีน วะลา ตุคซินี เยามะ ยุบอาษูน เยามะ ลา ยันฟะอุ มาลุน วะลา บะนูน อิลลา มัน อะตัลลอฮะ บิก็อลบิน สะลีม",
                 thaiTranslation: "โอ้พระผู้อภิบาลของข้าพระองค์ โปรดประทานปัญญาแก่ข้าพระองค์ และโปรดให้ข้าพระองค์อยู่ร่วมกับผู้ทรงคุณธรรม โปรดประทานเกียรติและชื่อเสียงอันดีแก่ข้าพระองค์ในหมู่ชนรุ่นหลัง โปรดให้ข้าพระองค์เป็นผู้รับมรดกสวนสวรรค์แห่งความสุข โปรดยกโทษแก่บิดาของข้าพระองค์ แท้จริงเขาเป็นผู้หลงผิด และโปรดอย่าให้ข้าพระองค์อัปยศในวันที่พวกเขาถูกให้ฟื้นคืนชีพ วันที่ทรัพย์สินและบุตรไม่อำนวยประโยชน์ เว้นแต่ผู้ที่มาหาอัลลอฮ์ด้วยหัวใจอันบริสุทธิ์",
                 evidence: "อัลกุรอาน ซูเราะฮ์อัช-ชุอะรออ์ 26:83–89: เป็นถ้อยคำวิงวอนของอิบรอฮีม عليه السلام ต่อด้วยการกล่าวถึงวันฟื้นคืนชีพและหัวใจที่บริสุทธิ์ ตัวบทและคำแปลอ้างจาก Quran.com ซึ่งแสดงอายะฮ์ 26:83–89 โดยตรง แหล่งอ้างอิง: https://quran.com/ash-shuara/83-89",
-                githubAudioFile: "audio/dua_q28.mp3",
                 icon: "fa-book-open",
                 colorClass: "from-purple-50/50 to-purple-100 hover:shadow-purple-100 border-purple-200",
             },
@@ -1621,7 +1633,6 @@
                 thaiTrans: "ร็อบบี เอาซิอ์นี อัน อัชกุร นิอ์มะตะกัลละตี อันอัมตะ อะลัยยะ วะอะลา วาลิดัยยะ วะอัน อะอ์มะละ ศอลิหัน ตัรฎอฮู วะอัดคิลนี บิเราะห์มะติกะ ฟี อิบาดิกัศศอลิหีน",
                 thaiTranslation: "ข้าแต่พระผู้เป็นเจ้าของข้าพระองค์ โปรดดลบันดาลให้ข้าพระองค์ขอบคุณต่อความโปรดปรานของพระองค์ที่พระองค์ทรงประทานแก่ข้าพระองค์และบิดามารดาของข้าพระองค์ และให้ข้าพระองค์ทำความดีที่พระองค์ทรงพอพระทัย และโปรดให้ข้าพระองค์เข้าสู่ความเมตตาของพระองค์ในหมู่ปวงบ่าวผู้ดีของพระองค์",
                 evidence: "อายะฮ์อัลกุรอาน ซูเราะฮ์อันนัมล์ 27:19 เป็นคำวิงวอนของสุลัยมาน عليه السلام ในบริบทของเรื่องมด ไม่ใช่หะดีษ จึงไม่จัดระดับเป็นเศาะฮีห์/หะสันแบบหะดีษ; ตัวบทและคำแปลตรวจสอบจาก Quran.com แหล่งอ้างอิง: https://quran.com/th/27/19",
-                githubAudioFile: "audio/dua_q29.mp3",
                 icon: "fa-heart",
                 colorClass: "from-pink-50/50 to-pink-100 hover:shadow-pink-100 border-pink-200",
             },
@@ -1646,7 +1657,6 @@
                 thaiTrans: "ร็อบบะนา วะสิอ์ตะ กุลละชัยอิน เราะห์มะตัน วะอิลมัน ฟัฆฟิร ลิลละซีนะ ตาบู วัตตะบะอู สะบีละกะ วะกิฮิม อะซาบัลญะฮีม ۝ ร็อบบะนา วะอัดคิลฮุม ญันนาติอัดนินิลละตี วะอัดตะฮุม วะมัน ศอละหะ มิน อาบาอิฮิม วะอัซวาญิฮิม วะซุรริยาตีฮิม อินนะกะ อันตัลอะซีซุลหะกีม ۝ วะกิฮิมุสสัยยิอาติ วะมัน ตะกิสสัยยิอาติ เยามะอิซิน ฟะก็อด เราะหิมตะฮู วะซาลิกะ ฮุวัลเฟาซุลอะซีม",
                 thaiTranslation: "โอ้พระผู้อภิบาลของเรา พระองค์ทรงครอบคลุมทุกสิ่งด้วยความเมตตาและความรู้ ดังนั้นโปรดอภัยแก่บรรดาผู้ที่กลับใจและปฏิบัติตามทางของพระองค์ และโปรดปกป้องพวกเขาให้พ้นจากการลงโทษแห่งไฟนรก โอ้พระผู้อภิบาลของเรา โปรดให้พวกเขาเข้าสวนสวรรค์อัดนฺที่พระองค์ทรงสัญญาไว้แก่พวกเขา รวมทั้งผู้ชอบธรรมในหมู่บรรพบุรุษ คู่ครอง และลูกหลานของพวกเขาด้วย แท้จริงพระองค์คือผู้ทรงอำนาจ ผู้ทรงปรีชาญาณ และโปรดปกป้องพวกเขาจากความชั่วทั้งหลายด้วย ผู้ใดที่พระองค์ทรงปกป้องจากความชั่วทั้งหลายในวันนั้น พระองค์ก็ทรงเมตตาเขาแล้ว และนั่นคือชัยชนะอันยิ่งใหญ่",
                 evidence: "อัลกุรอาน ซูเราะฮ์ฆอฟิร 40:7-9: มลาอิกะฮ์ผู้แบกบัลลังก์และผู้ที่อยู่รอบบัลลังก์วิงวอนขออภัยโทษและความคุ้มครองแก่ผู้ศรัทธา โดยส่วนที่เป็นดุอาอ์เริ่มจาก รَبَّنَا ใน 40:7 และต่อเนื่องถึง 40:9; ไม่ใช่หะดีษ จึงไม่จัดระดับเป็นเศาะฮีห์/หะสันแบบหะดีษ แหล่งอ้างอิง: https://quran.com/ghafir/7-9",
-                githubAudioFile: "audio/dua_q31.mp3",
                 icon: "fa-book-open",
                 colorClass: "from-purple-50/50 to-purple-100 hover:shadow-purple-100 border-purple-200",
             },
@@ -1671,7 +1681,6 @@
                 thaiTrans: "ร็อบบะนา อิฆฟิร ละนา วะลิอิควานินัลละซีนะ สะบะกูนา บิลอีมาน วะลา ตัจอัล ฟี กุลูบินา ฆิลลัน ลิลละซีนะ อามะนู ร็อบบะนา อินนะกะ เราะอูฟุร เราะฮีม",
                 thaiTranslation: "ข้าแต่พระเจ้าของเรา โปรดอภัยโทษแก่เราและพี่น้องของเราผู้ศรัทธามาก่อนเรา และอย่าทรงให้มีความขุ่นเคืองใด ๆ ในหัวใจของเราต่อบรรดาผู้ศรัทธา ข้าแต่พระเจ้าของเรา แท้จริงพระองค์ทรงเอ็นดูยิ่ง ทรงเมตตาเสมอ",
                 evidence: "ส่วนคำวิงวอนจากอัลกุรอาน ซูเราะฮ์อัล-หัชร์ 59:10: ผู้ศรัทธารุ่นหลังวิงวอนขอการอภัยแก่ตนเองและพี่น้องผู้ศรัทธาที่มาก่อน พร้อมขออย่าให้มีความขุ่นเคืองต่อผู้ศรัทธา ข้อความอาหรับตรวจจาก Quran.com โดยตรง และตรวจเทียบรายการเดิม 20 บทแล้วไม่พบตัวบทซ้ำ แหล่งอ้างอิง: https://quran.com/59/10",
-                githubAudioFile: "audio/dua_q33.mp3",
                 icon: "fa-heart",
                 colorClass: "from-pink-50/50 to-pink-100 hover:shadow-pink-100 border-pink-200",
             },
@@ -1696,7 +1705,6 @@
                 thaiTrans: "ฟะอิน คิฟตุม ฟะริญาลัน เอา รุกบานัน ฟะอิซา อะมันตุม ฟัซกุรุลลอฮะ กะมา อัลละมะกุม มา ลัม ตะกูนู ตะอ์ละมูน",
                 thaiTranslation: "ดังนั้น หากพวกเจ้าหวาดกลัว ก็จงละหมาดขณะเดินหรือขณะขี่พาหนะ แต่เมื่อพวกเจ้าปลอดภัยแล้ว ก็จงรำลึกถึงอัลลอฮ์ ดังที่พระองค์ทรงสอนพวกเจ้าในสิ่งที่พวกเจ้าไม่เคยรู้",
                 evidence: "อัลกุรอาน ซูเราะฮ์อัล-บะเกาะเราะฮ์ 2:239: อายะฮ์สั่งแนวทางละหมาดในภาวะหวาดกลัว และให้รำลึกถึงอัลลอฮ์เมื่อปลอดภัย; ไม่ใช่หะดีษ จึงไม่มีการจัดระดับเศาะฮีห์หรือหะสัน แหล่งอ้างอิง: https://quran.com/al-baqarah/239",
-                githubAudioFile: "audio/dua_q35.mp3",
                 icon: "fa-book-open",
                 colorClass: "from-purple-50/50 to-purple-100 hover:shadow-purple-100 border-purple-200",
             },
@@ -1987,8 +1995,6 @@
                 thaiTrans: "กุล ฮุวัลลอฮุ อะหัด อัลลอฮุศเศาะมัด ลัมยะลิด วะลัมยูวะลัด วะลัมยะกุลละฮู กุฟุวัน อะหัด\n\nกุล อะอูซุ บิร็อบบิลฟะลัก มิน ชัรริ มา เคาะลัก วะมิน ชัรริ ฆอซิกิน อิซา วะก็อบ วะมิน ชัรรินนัฟฟาษาติ ฟิลอุก็อด วะมิน ชัรริ ฮาซิดิน อิซา ฮะสัด\n\nกุล อะอูซุ บิร็อบบินนาส มะลิกินนาส อิลาฮินนาส มิน ชัรริลวัสวาสิลค็อนนาส อัลละซี ยูวัสวิสุ ฟี ศุดูรินนาส มินัลญินนะติ วันนาส",
                 thaiTranslation: "จงกล่าวเถิด พระองค์คืออัลลอฮ์ผู้ทรงเอกะ อัลลอฮ์ผู้ทรงเป็นที่พึ่งของทุกสิ่ง พระองค์มิได้ให้กำเนิด และมิได้ถูกให้กำเนิด และไม่มีผู้ใดเสมอเหมือนพระองค์\n\nจงกล่าวเถิด ข้าพระองค์ขอความคุ้มครองต่อพระผู้อภิบาลแห่งรุ่งอรุณ ให้พ้นจากความชั่วร้ายของสิ่งที่พระองค์ทรงสร้าง และจากความชั่วร้ายของความมืดเมื่อมันแผ่ปกคลุม และจากความชั่วร้ายของผู้เป่าใส่ปมผูก และจากความชั่วร้ายของผู้ริษยาเมื่อเขาริษยา\n\nจงกล่าวเถิด ข้าพระองค์ขอความคุ้มครองต่อพระผู้อภิบาลแห่งมนุษย์ พระราชาแห่งมนุษย์ พระเจ้าของมนุษย์ ให้พ้นจากความชั่วร้ายของผู้กระซิบกระซาบที่หลบซ่อน ผู้กระซิบในทรวงอกของมนุษย์ ทั้งจากหมู่ญินและมนุษย์",
                 evidence: "หะดีษจากท่านหญิงอาอิชะฮ์ رضي الله عنها ระบุว่า เมื่อท่านนบี ﷺ เข้านอนทุกคืน ท่านจะประสานมือ เป่าลมลงบนมือพร้อมอ่านสุเราะฮ์อัลอิคลาศ อัลฟะลัก และอันนาส แล้วลูบเท่าที่ทำได้ทั่วร่างกาย โดยเริ่มจากศีรษะ ใบหน้า และด้านหน้าของร่างกาย และทำเช่นนั้น 3 ครั้ง. Sunnah.com แสดงการจัดระดับว่า Sahih (Al-Albani) ใน Sunan Abi Dawud 5056; มีถ้อยคำคู่ขนานใน Sahih al-Bukhari 5017 ซึ่งเป็นหะดีษเศาะฮีห์ของอัล-บุคอรีย์. แหล่งอ้างอิง: https://sunnah.com/abudawud:5056 | https://sunnah.com/bukhari:5017 | https://quran.com/112 | https://quran.com/113 | https://quran.com/114",
-                audioUrl: "https://everyayah.com/data/Alafasy_128kbps/002255.mp3",
-                githubAudioFile: "audio/dua_h24.mp3",
                 icon: "fa-moon",
                 colorClass: "from-indigo-50/50 to-indigo-100 hover:shadow-indigo-100 border-indigo-200",
             },
@@ -2257,6 +2263,7 @@
             activeModalTab: 'reading',
             repetitionTracker: { 1: false, 2: false, 3: false },
             currentAudio: null,
+            audioSession: 0,
             chosenMascot: { emoji: '⭐️', name: 'ดาราน้อย' },
             syncUserId: null,
             dashboardPeriod: 'weekly',
@@ -3208,13 +3215,11 @@
                 modalContent.classList.add('scale-100');
             }, 10);
 
-            setTimeout(() => {
-                playArabicSpeechFromModal();
-            }, 300);
         }
 
         function closeModal() {
             playSound('tick');
+            state.audioSession += 1;
             if (state.currentAudio) {
                 state.currentAudio.pause();
                 state.currentAudio = null;
